@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Defend the savanna picnic with a crew of capybara towers against waves of invading cheetahs." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#824019" />
+    <title>Savanna Snackdown — Cheetahs vs Capybaras</title>
+    <link rel="icon" type="image/png" href="assets/capy-reference/berry-slinger.png" />
+    <link rel="apple-touch-icon" href="assets/capy-reference/berry-slinger.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="sky-confetti" aria-hidden="true"></div>
+    <main class="game-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">🐆<b>VS</b>🐹</span>
+          <div>
+            <p class="eyebrow">CHEETAHS VS CAPYBARAS · V2</p>
+            <h1>Savanna Snackdown</h1>
+          </div>
+        </div>
+        <div class="stats" aria-label="Game stats">
+          <div class="stat coin-stat"><span>🪙</span><strong id="coins">180</strong><small>coins</small></div>
+          <div class="stat"><span>❤️</span><strong id="lives">20</strong><small>lives</small></div>
+          <div class="stat"><span>🐾</span><strong id="wave">0</strong><small>wave</small></div>
+        </div>
+        <div class="header-actions">
+          <button id="soundBtn" class="icon-btn" type="button" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+          <button id="helpBtn" class="icon-btn" type="button" aria-label="How to play" title="How to play">?</button>
+        </div>
+      </header>
+
+      <section class="game-grid">
+        <aside class="tower-panel" aria-label="Capybara tower shop">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">CAPY CREW</p>
+              <h2>Pick a defender</h2>
+            </div>
+            <span class="tiny-badge">3 towers + trap</span>
+          </div>
+
+          <button class="tower-card active" type="button" data-tower="slinger" aria-pressed="true">
+            <span class="tower-emoji"><img src="assets/capy-reference/berry-slinger.png" alt="" /></span>
+            <span class="tower-copy">
+              <strong>Orange Snacker</strong>
+              <small>Fast citrus lobber</small>
+              <span class="mini-stats"><i>DMG 12</i><i>RNG 125</i></span>
+            </span>
+            <span class="price">🪙 60</span>
+          </button>
+
+          <button class="tower-card" type="button" data-tower="melon" aria-pressed="false">
+            <span class="tower-emoji"><img src="assets/capy-reference/melon-mortar.png" alt="" /></span>
+            <span class="tower-copy">
+              <strong>Spring Soaker</strong>
+              <small>Splashy hot-spring water</small>
+              <span class="mini-stats"><i>DMG 26</i><i>AREA 65</i></span>
+            </span>
+            <span class="price">🪙 95</span>
+          </button>
+
+          <button class="tower-card" type="button" data-tower="chill" aria-pressed="false">
+            <span class="tower-emoji"><img src="assets/capy-reference/chill-capy.png" alt="" /></span>
+            <span class="tower-copy">
+              <strong>Chill Capy</strong>
+              <small>Slows fast paws</small>
+              <span class="mini-stats"><i>DMG 7</i><i>SLOW 45%</i></span>
+            </span>
+            <span class="price">🪙 80</span>
+          </button>
+
+          <button class="tower-card trap-card" type="button" data-tower="basket" aria-pressed="false">
+            <span class="tower-emoji">🧺</span>
+            <span class="tower-copy">
+              <strong>Basket Snare</strong>
+              <small>Reusable road trap</small>
+              <span class="mini-stats"><i>HOLD 1.2s</i><i>AREA 55</i></span>
+            </span>
+            <span class="price">🪙 45</span>
+          </button>
+
+          <div class="tip-card">
+            <span>💡</span>
+            <p>Select a defender and tap grass to build. Tap a capy to upgrade or sell; drag it to move.</p>
+          </div>
+        </aside>
+
+        <section class="board-wrap">
+          <div class="board-chrome">
+            <div class="route-label"><span>🐾</span> DUSTY DASH TRAIL</div>
+            <div id="bossAlert" class="boss-alert" hidden>👑 ALPHA CHEETAH</div>
+            <div class="board-controls">
+              <button id="topStartWaveBtn" class="top-start-wave" type="button">
+                <span>Start wave 1</span><b>▶</b>
+              </button>
+              <button id="pauseBtn" class="board-btn" type="button" aria-label="Pause game">⏸</button>
+              <button id="speedBtn" class="board-btn speed" type="button" aria-label="Change speed">1×</button>
+              <button id="autoStartBtn" class="auto-start-btn" type="button" aria-pressed="false">Auto off</button>
+            </div>
+          </div>
+          <div class="canvas-frame">
+            <canvas id="gameCanvas" width="1000" height="600" aria-label="Tower defense game board"></canvas>
+            <div id="toast" class="toast" role="status" aria-live="polite"></div>
+            <div id="countdown" class="countdown" hidden></div>
+
+            <div id="welcomeCard" class="welcome-card">
+              <button class="close-welcome" type="button" aria-label="Close instructions">×</button>
+              <span class="welcome-icon">🧺</span>
+              <p class="eyebrow">DEFEND THE PICNIC · V2</p>
+              <h2>Hold the savanna!</h2>
+              <p>Place capybara defenders beside the trail. Don’t let the cheetah invasion reach your snacks.</p>
+              <button id="letsGoBtn" class="primary-btn" type="button">Let’s defend! <span>→</span></button>
+            </div>
+
+            <div id="endCard" class="end-card" hidden>
+              <span id="endEmoji" class="end-emoji">🌧️</span>
+              <p class="eyebrow">PICNIC REPORT</p>
+              <h2 id="endTitle">The snacks got pounced!</h2>
+              <p id="endText">You held out for 0 waves.</p>
+              <button id="restartBtn" class="primary-btn" type="button">Try again <span>↻</span></button>
+            </div>
+
+            <aside id="towerInspector" class="tower-inspector" aria-label="Selected tower controls" hidden>
+              <button id="closeInspectorBtn" class="inspector-close" type="button" aria-label="Close tower controls">×</button>
+              <div class="inspector-heading">
+                <span class="inspector-art">
+                  <img id="inspectorImage" src="assets/capy-reference/berry-slinger.png" alt="" />
+                  <span id="inspectorEmoji" hidden>🧺</span>
+                </span>
+                <div>
+                  <p id="inspectorLevel" class="eyebrow">LEVEL 1 / 3</p>
+                  <h3 id="inspectorName">Orange Snacker</h3>
+                </div>
+              </div>
+              <div class="inspector-stats">
+                <span><small id="inspectorDamageLabel">Damage</small><b id="inspectorDamage">12</b></span>
+                <span><small id="inspectorRangeLabel">Range</small><b id="inspectorRange">125</b></span>
+                <span><small id="inspectorSpeedLabel">Speed</small><b id="inspectorSpeed">Fast</b></span>
+              </div>
+              <div class="inspector-actions">
+                <button id="upgradeTowerBtn" class="upgrade-btn" type="button">Upgrade · 🪙 45</button>
+                <button id="sellTowerBtn" class="sell-btn" type="button">Sell · 🪙 39</button>
+              </div>
+            </aside>
+          </div>
+
+          <footer class="wavebar">
+            <div class="wave-copy">
+              <span id="waveIcon" class="wave-icon">🌱</span>
+              <div>
+                <p class="eyebrow" id="waveStatus">SAVANNA IS QUIET</p>
+                <strong id="waveDescription">Build your first line of defense</strong>
+              </div>
+            </div>
+            <div class="progress-shell" aria-label="Wave progress">
+              <div class="progress-track"><span id="waveProgress"></span></div>
+              <small id="enemyCount">0 cheetahs on trail</small>
+            </div>
+            <button id="startWaveBtn" class="start-wave" type="button">
+              <span>Start wave 1</span><b>▶</b>
+            </button>
+          </footer>
+        </section>
+      </section>
+
+      <footer class="page-footer">
+        <span>🥪 Picnic integrity is a serious matter—even on the savanna.</span>
+        <span>Keyboard: <kbd>1</kbd>–<kbd>4</kbd> select • <kbd>Space</kbd> start/pause • <kbd>Esc</kbd> cancel</span>
+      </footer>
+    </main>
+
+    <dialog id="helpDialog" class="help-dialog">
+      <button id="closeHelpBtn" class="dialog-close" type="button" aria-label="Close">×</button>
+      <span class="dialog-emoji">🗺️</span>
+      <p class="eyebrow">FIELD GUIDE</p>
+      <h2>How to save the snacks</h2>
+      <ol>
+        <li><b>Choose a capy.</b> Each tower has a different specialty.</li>
+        <li><b>Place it on grass.</b> Towers can’t block the dusty dash trail.</li>
+        <li><b>Start the wave.</b> Defeated cheetahs drop coins for more towers.</li>
+        <li><b>Prepare for crowns.</b> Every 5th wave has a powerful alpha cheetah.</li>
+        <li><b>Improve your crew.</b> Tap a placed capy to upgrade it through level 3 or sell it for a partial refund.</li>
+        <li><b>Reposition freely.</b> Drag a placed capy to another clear patch of grass. Invalid drops snap back.</li>
+        <li><b>Trap the trail.</b> Basket Snares go directly on the road, briefly stopping nearby cheetahs before recharging.</li>
+        <li><b>Keep it moving.</b> Turn on Auto to begin each new wave after a short countdown.</li>
+      </ol>
+      <button id="gotItBtn" class="primary-btn" type="button">Got it! ✨</button>
+    </dialog>
+
+    <script src="game.js"></script>
+  </body>
+</html>

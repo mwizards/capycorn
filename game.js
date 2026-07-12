@@ -64,7 +64,7 @@ const decor = [
 ];
 
 let state;
-let selectedTower = 'slinger';
+let selectedTower = null;
 let hoverPoint = null;
 let lastTime = performance.now();
 let toastTimer = 0;
@@ -107,7 +107,7 @@ function freshState() {
 
 function init() {
   state = freshState();
-  selectedTower = 'slinger';
+  selectedTower = null;
   speed = 1;
   draggingTower = null;
   dragOrigin = null;
@@ -196,14 +196,24 @@ function canPlaceDefense(point, type, ignoredTower = null) {
 }
 
 function selectTower(type) {
-  selectedTower = type;
+  const wasSelected = selectedTower === type;
+  selectedTower = wasSelected ? null : type;
   state.selectedPlaced = null;
   document.querySelectorAll('.tower-card').forEach((card) => {
-    const active = card.dataset.tower === type;
+    const active = card.dataset.tower === selectedTower;
     card.classList.toggle('active', active);
     card.setAttribute('aria-pressed', String(active));
   });
+  if (wasSelected) showToast('Placement mode cancelled');
   updateUI();
+}
+
+function clearPlacementSelection() {
+  selectedTower = null;
+  document.querySelectorAll('.tower-card').forEach((card) => {
+    card.classList.remove('active');
+    card.setAttribute('aria-pressed', 'false');
+  });
 }
 
 function getTowerStats(tower) {
@@ -326,6 +336,10 @@ function sellSelectedTower() {
 
 function placeTower(point) {
   if (state.gameOver || state.countdownActive) return;
+  if (!selectedTower) {
+    showToast('Choose a defender or basket first');
+    return;
+  }
   const type = TOWER_TYPES[selectedTower];
   if (!canPlaceDefense(point, selectedTower)) {
     showToast(type.trap ? 'Basket traps must go on a clear part of the road 🧺' : 'That spot needs more room 🌿', true);
@@ -345,6 +359,7 @@ function placeTower(point) {
   };
   state.towers.push(tower);
   state.selectedPlaced = tower;
+  clearPlacementSelection();
   burst(placement.x, placement.y, type.color, 10);
   addFloater(placement.x, placement.y - 30, `-${type.cost} 🪙`, '#7c5290');
   showToast(`${type.name} reporting for duty!`);
@@ -683,6 +698,7 @@ function updateUI() {
   els.autoStartBtn.textContent = state.autoStart ? 'Auto on' : 'Auto off';
   els.autoStartBtn.classList.toggle('active', state.autoStart);
   els.autoStartBtn.setAttribute('aria-pressed', String(state.autoStart));
+  canvas.classList.toggle('placing', Boolean(selectedTower));
 
   const remaining = state.enemies.length + state.spawnQueue.length;
   const progress = state.totalThisWave ? (state.totalThisWave - remaining) / state.totalThisWave * 100 : 0;
@@ -1201,7 +1217,7 @@ function drawEffects() {
 }
 
 function drawPlacementPreview() {
-  if (!hoverPoint || state.gameOver || state.countdownActive || state.selectedPlaced) return;
+  if (!selectedTower || !hoverPoint || state.gameOver || state.countdownActive || state.selectedPlaced) return;
   const type = TOWER_TYPES[selectedTower];
   const snapped = type.trap ? nearestPointOnPath(hoverPoint) : hoverPoint;
   const previewPoint = type.trap ? { x: snapped.x, y: snapped.y } : hoverPoint;
@@ -1336,6 +1352,7 @@ window.addEventListener('keydown', (event) => {
     if (draggingTower) finishTowerDrag(true);
     hoverPoint = null;
     state.selectedPlaced = null;
+    clearPlacementSelection();
     updateUI();
   }
   if (event.code === 'Space') {

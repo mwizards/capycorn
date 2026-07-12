@@ -101,7 +101,8 @@ function freshState() {
     coins: 180, lives: 20, wave: 0, towers: [], enemies: [], projectiles: [], particles: [], floaters: [],
     waveActive: false, spawning: false, spawnQueue: [], spawnTimer: 0, totalThisWave: 0, defeatedThisWave: 0,
     paused: false, gameOver: false, countdownActive: false, elapsed: 0, selectedPlaced: null,
-    autoStart: false, autoStartCountdown: 0
+    autoStart: false, autoStartCountdown: 0, portalPulse: 0, portalLabelUntil: 0,
+    portalBossUntil: 0, palaceHit: 0
   };
 }
 
@@ -171,6 +172,7 @@ function nearestPointOnPath(point) {
 
 function canPlace(point, ignoredTower = null) {
   if (point.x < 42 || point.x > BASE_W - 42 || point.y < 45 || point.y > BASE_H - 42) return false;
+  if (point.x > 845 && point.y > 365) return false;
   for (let i = 0; i < path.length - 1; i++) {
     if (distanceToSegment(point, path[i], path[i + 1]) < 66) return false;
   }
@@ -406,6 +408,9 @@ function beginWave() {
   state.waveActive = true;
   state.spawning = true;
   state.spawnTimer = 0;
+  state.portalPulse = isBoss ? 2.2 : 1.35;
+  state.portalLabelUntil = state.elapsed + 2.2;
+  state.portalBossUntil = isBoss ? state.elapsed + 4.5 : 0;
   els.bossAlert.hidden = !isBoss;
   showToast(isBoss ? '👑 The alpha cheetah is approaching!' : `Cheetah wave ${state.wave} incoming!`);
   playChord(isBoss ? [150, 120, 90] : [320, 440, 640], .18);
@@ -421,6 +426,8 @@ function spawnEnemy(kind) {
     boss: { hp: baseHp * (8 + state.wave * .3), speed: 37 + state.wave * .4, reward: 110 + state.wave * 4, size: 53 }
   };
   const config = configs[kind];
+  state.portalPulse = Math.max(state.portalPulse, kind === 'boss' ? 2.4 : .85);
+  burst(34, 130, kind === 'boss' ? '#ff667d' : '#8ce9ff', kind === 'boss' ? 22 : 8);
   state.enemies.push({
     kind, hp: config.hp, maxHp: config.hp, baseSpeed: config.speed, reward: config.reward, size: config.size,
     segment: 0, segmentT: 0, x: path[0].x, y: path[0].y, slowUntil: 0,
@@ -432,6 +439,8 @@ function spawnEnemy(kind) {
 function update(dt) {
   if (state.paused || state.gameOver || state.countdownActive) return;
   state.elapsed += dt;
+  state.portalPulse = Math.max(0, state.portalPulse - dt * 2.2);
+  state.palaceHit = Math.max(0, state.palaceHit - dt * 1.8);
 
   if (!state.waveActive && state.autoStart && state.autoStartCountdown > 0) {
     state.autoStartCountdown -= dt;
@@ -480,8 +489,10 @@ function updateEnemies(dt) {
       enemy.dead = true;
       const damage = enemy.kind === 'boss' ? 5 : enemy.kind === 'tanky' ? 2 : 1;
       state.lives = Math.max(0, state.lives - damage);
-      addFloater(BASE_W - 90, 470, `-${damage} ❤️`, '#d73974');
-      burst(BASE_W - 30, 500, '#ff79b1', 14);
+      state.palaceHit = 1;
+      addFloater(BASE_W - 88, 405, `SNACK STOLEN! -${damage} ❤️`, '#d73974');
+      burst(BASE_W - 55, 492, '#ff79b1', 14);
+      burst(BASE_W - 80, 472, '#ffd15c', 9);
       playTone(105, .25, 'sawtooth', .045);
       if (state.lives <= 0) endGame();
       continue;
@@ -602,7 +613,7 @@ function finishWave() {
   state.coins += bonus;
   els.bossAlert.hidden = true;
   addFloater(BASE_W / 2, 55, `Wave bonus +${bonus} 🪙`, '#5a338f');
-  showToast(`Wave ${state.wave} cleared! Picnic secured ✨`);
+  showToast(`Wave ${state.wave} cleared! Snack Palace secured ✨`);
   playChord([380, 480, 620, 760], .15);
   if (state.autoStart) state.autoStartCountdown = 3;
   updateUI();
@@ -706,7 +717,7 @@ function updateUI() {
   els.enemyCount.textContent = `${state.enemies.length} cheetah${state.enemies.length === 1 ? '' : 's'} on trail`;
 
   if (state.gameOver) {
-    els.waveStatus.textContent = 'PICNIC OVERRUN';
+    els.waveStatus.textContent = 'SNACK PALACE OVERRUN';
     els.waveDescription.textContent = 'The capy crew needs a rematch';
     els.waveIcon.textContent = '🌧️';
   } else if (state.paused) {
@@ -780,6 +791,8 @@ function draw() {
   ctx.clearRect(0, 0, BASE_W, BASE_H);
   drawMeadow();
   drawPath();
+  drawPortal();
+  drawSnackPalace();
   drawDecor();
   drawTowers();
   drawProjectiles();
@@ -807,7 +820,7 @@ function drawMeadow() {
   }
   ctx.globalAlpha = 1;
 
-  // Pond and picnic destination.
+  // Pond near the capybara stronghold.
   ctx.fillStyle = '#74cfd0';
   ctx.beginPath();
   ctx.ellipse(860, 95, 74, 34, -.05, 0, Math.PI * 2);
@@ -818,14 +831,6 @@ function drawMeadow() {
   ctx.arc(840, 92, 28, Math.PI * 1.1, Math.PI * 1.8);
   ctx.stroke();
 
-  roundRect(926, 465, 66, 72, 15, '#fff0b9');
-  ctx.font = '38px serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('🧺', 959, 499);
-  ctx.font = '800 9px Nunito';
-  ctx.fillStyle = '#67421a';
-  ctx.fillText('PICNIC', 959, 525);
 }
 
 function drawPath() {
@@ -860,6 +865,126 @@ function tracePath() {
   ctx.beginPath();
   ctx.moveTo(path[0].x, path[0].y);
   for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+}
+
+function drawPortal() {
+  const pulse = state.portalPulse || 0;
+  const bossMode = state.elapsed < state.portalBossUntil;
+  const x = 31;
+  const y = 130;
+  ctx.save();
+  ctx.translate(x, y);
+
+  const glow = ctx.createRadialGradient(0, 0, 5, 0, 0, 56 + pulse * 7);
+  glow.addColorStop(0, bossMode ? 'rgba(255,70,95,.9)' : 'rgba(55,27,105,.96)');
+  glow.addColorStop(.45, bossMode ? 'rgba(255,150,55,.5)' : 'rgba(113,88,255,.45)');
+  glow.addColorStop(1, 'rgba(70,40,120,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 63 + pulse * 6, 79 + pulse * 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = bossMode ? '#3d1026' : '#28194e';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 28 + pulse * 2, 52 + pulse * 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const colors = bossMode
+    ? ['#ff435f', '#ff9c3f', '#ffd65a']
+    : ['#ff77b7', '#ffca5c', '#72df91', '#6ed6ff', '#a989ff'];
+  ctx.lineCap = 'round';
+  colors.forEach((color, index) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 6;
+    ctx.globalAlpha = .82;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 34 + index * 5 + pulse * 2, 58 + index * 4 + pulse * 3, 0,
+      state.elapsed * (index % 2 ? -.9 : .8) + index,
+      state.elapsed * (index % 2 ? -.9 : .8) + index + Math.PI * 1.2);
+    ctx.stroke();
+  });
+
+  ctx.globalAlpha = .75;
+  ctx.font = `${15 + pulse * 2}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < 4; i++) {
+    const angle = state.elapsed * .9 + i * Math.PI / 2;
+    ctx.fillText('🐾', Math.cos(angle) * 48, Math.sin(angle) * 65);
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  roundRect(8, 42, 116, 25, 12, 'rgba(50,30,79,.88)');
+  ctx.fillStyle = '#fff6d7';
+  ctx.font = '900 11px Nunito';
+  ctx.fillText(bossMode ? '⚠ ALPHA PORTAL' : 'CHEETAH PORTAL', 18, 55);
+  if (state.elapsed < state.portalLabelUntil) {
+    roundRect(9, 87, 85, 28, 14, bossMode ? '#e94a66' : '#7257c9');
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 13px Nunito';
+    ctx.fillText(`WAVE ${state.wave}`, 22, 101);
+  }
+  ctx.restore();
+}
+
+function drawSnackPalace() {
+  const hit = state.palaceHit || 0;
+  const shake = hit ? Math.sin(state.elapsed * 70) * 7 * hit : 0;
+  const x = 947 + shake;
+  const y = 486;
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.fillStyle = 'rgba(56,45,66,.2)';
+  ctx.beginPath();
+  ctx.ellipse(0, 58, 68, 17, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Palace towers and warm pantry walls.
+  roundRect(-48, -42, 95, 98, 12, hit ? '#ffd0d5' : '#fff0b2');
+  roundRect(-58, -28, 30, 83, 8, '#ef9b63');
+  roundRect(27, -28, 30, 83, 8, '#ef9b63');
+  ctx.fillStyle = '#d76565';
+  ctx.beginPath();
+  ctx.moveTo(-64, -27); ctx.lineTo(-43, -61); ctx.lineTo(-22, -27); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(21, -27); ctx.lineTo(42, -61); ctx.lineTo(63, -27); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#e97a68';
+  ctx.beginPath();
+  ctx.moveTo(-51, -42); ctx.lineTo(0, -83); ctx.lineTo(51, -42); ctx.closePath(); ctx.fill();
+
+  // Road-facing pantry door and snack windows.
+  roundRect(-58, 8, 31, 47, 10, '#70466b');
+  ctx.fillStyle = '#fbe785';
+  ctx.beginPath(); ctx.arc(-36, 31, 3, 0, Math.PI * 2); ctx.fill();
+  ['🍊', '🍉', '🍪'].forEach((snack, index) => {
+    ctx.font = '20px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(snack, -17 + index * 25, -8 + (index === 1 ? 5 : 0));
+  });
+  roundRect(-39, -38, 78, 20, 9, '#714968');
+  ctx.fillStyle = '#fff5c9';
+  ctx.font = '900 9px Nunito';
+  ctx.fillText('SNACK PALACE', 0, -28);
+
+  // Remaining supplies visually shrink as lives are lost.
+  const baskets = Math.max(0, Math.ceil(state.lives / 4));
+  ctx.font = '16px serif';
+  for (let i = 0; i < baskets; i++) ctx.fillText('🧺', -32 + i * 16, 45);
+
+  if (hit > 0) {
+    ctx.globalAlpha = hit;
+    ctx.font = '18px serif';
+    for (let i = 0; i < 6; i++) {
+      const angle = i * Math.PI / 3 + state.elapsed * 2;
+      ctx.fillText(i % 2 ? '✨' : '🍪', Math.cos(angle) * (55 + (1 - hit) * 25), Math.sin(angle) * 45);
+    }
+  }
+  ctx.restore();
 }
 
 function drawDecor() {

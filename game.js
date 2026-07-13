@@ -808,7 +808,6 @@ function draw() {
   drawPortal();
   drawSnackPalace();
   drawDecor();
-  drawAmbientFriends();
   drawTowers();
   drawProjectiles();
   drawEnemies();
@@ -1013,33 +1012,6 @@ function drawDecor() {
     ctx.fillText(emoji, x, y);
   }
   ctx.globalAlpha = 1;
-}
-
-function drawAmbientFriends() {
-  const butterflies = [
-    { x: 245, y: 63, color: '#ff5e91', phase: 0 },
-    { x: 742, y: 175, color: '#7c4dff', phase: 2.1 },
-    { x: 145, y: 395, color: '#57c9f5', phase: 4.3 }
-  ];
-  for (const butterfly of butterflies) {
-    const bob = Math.sin(state.elapsed * 2 + butterfly.phase) * 5;
-    const flap = 4 + Math.abs(Math.sin(state.elapsed * 7 + butterfly.phase)) * 5;
-    ctx.save();
-    ctx.translate(butterfly.x, butterfly.y + bob);
-    ctx.fillStyle = butterfly.color;
-    ctx.strokeStyle = 'rgba(48,32,94,.35)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(-flap, 0, flap, 6, -.35, 0, Math.PI * 2);
-    ctx.ellipse(flap, 0, flap, 6, .35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#30205e';
-    ctx.beginPath();
-    ctx.ellipse(0, 1, 2, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
 }
 
 function drawTowers() {

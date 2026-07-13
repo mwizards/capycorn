@@ -6,7 +6,7 @@
     <meta name="description" content="Defend the Capybara Snack Palace with a crew of towers against cheetahs pouring through a wild portal." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#824019" />
+    <meta name="theme-color" content="#7c4dff" />
     <title>Savanna Snackdown — Cheetahs vs Capybaras</title>
     <link rel="icon" type="image/png" href="assets/capy-reference/berry-slinger.png" />
     <link rel="apple-touch-icon" href="assets/capy-reference/berry-slinger.png" />
@@ -17,9 +17,13 @@
     <main class="game-shell">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">🐆<b>VS</b>🐹</span>
+          <span class="brand-mark" aria-hidden="true">
+            <img src="assets/cheetahs/normal.png" alt="" />
+            <b>VS</b>
+            <img src="assets/capy-reference/berry-slinger.png" alt="" />
+          </span>
           <div>
-            <p class="eyebrow">CHEETAHS VS CAPYBARAS · V3</p>
+            <p class="eyebrow">CHEETAHS VS CAPYBARAS · V4 STORYBOOK</p>
             <h1>Savanna Snackdown</h1>
           </div>
         </div>
@@ -39,9 +43,9 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">CAPY CREW</p>
-              <h2>Pick a defender</h2>
+              <h2>Choose your hero!</h2>
             </div>
-            <span class="tiny-badge">3 towers + trap</span>
+            <span class="tiny-badge">Tap to build</span>
           </div>
 
           <button class="tower-card" type="button" data-tower="slinger" aria-pressed="false">
@@ -49,7 +53,7 @@
             <span class="tower-copy">
               <strong>Orange Snacker</strong>
               <small>Fast citrus lobber</small>
-              <span class="mini-stats"><i>DMG 12</i><i>RNG 125</i></span>
+              <span class="mini-stats"><i>💥 12</i><i>🎯 Far</i></span>
             </span>
             <span class="price">🪙 60</span>
           </button>
@@ -59,7 +63,7 @@
             <span class="tower-copy">
               <strong>Spring Soaker</strong>
               <small>Splashy hot-spring water</small>
-              <span class="mini-stats"><i>DMG 26</i><i>AREA 65</i></span>
+              <span class="mini-stats"><i>💥 26</i><i>💦 Splash</i></span>
             </span>
             <span class="price">🪙 95</span>
           </button>
@@ -69,7 +73,7 @@
             <span class="tower-copy">
               <strong>Chill Capy</strong>
               <small>Slows fast paws</small>
-              <span class="mini-stats"><i>DMG 7</i><i>SLOW 45%</i></span>
+              <span class="mini-stats"><i>❄️ 7</i><i>🐢 Slow</i></span>
             </span>
             <span class="price">🪙 80</span>
           </button>
@@ -79,7 +83,7 @@
             <span class="tower-copy">
               <strong>Basket Snare</strong>
               <small>Reusable road trap</small>
-              <span class="mini-stats"><i>HOLD 1.2s</i><i>AREA 55</i></span>
+              <span class="mini-stats"><i>🛑 1.2s</i><i>✨ Wide</i></span>
             </span>
             <span class="price">🪙 45</span>
           </button>
@@ -111,9 +115,14 @@
             <div id="welcomeCard" class="welcome-card">
               <button class="close-welcome" type="button" aria-label="Close instructions">×</button>
               <span class="welcome-icon">🧺</span>
-              <p class="eyebrow">DEFEND THE SNACK PALACE · V3</p>
-              <h2>Hold the savanna!</h2>
-              <p>Cheetahs are pouring through the portal! Place capybara defenders beside the trail and protect every snack.</p>
+              <div class="welcome-story" aria-hidden="true">
+                <img src="assets/landmarks/cheetah-portal.png" alt="" />
+                <span>🐆 ➜ 🍪</span>
+                <img src="assets/landmarks/snack-palace.png" alt="" />
+              </div>
+              <p class="eyebrow">DEFEND THE SNACK PALACE · V4</p>
+              <h2>Snack heroes, assemble!</h2>
+              <p>Mischievous cheetahs are zooming through the rainbow portal. Build your capy crew and save every yummy snack!</p>
               <button id="letsGoBtn" class="primary-btn" type="button">Let’s defend! <span>→</span></button>
             </div>
 

@@ -33,7 +33,9 @@ const SPRITE_SOURCES = {
   regular: 'assets/cheetahs/normal.png',
   swift: 'assets/cheetahs/swift.png',
   tanky: 'assets/cheetahs/tanky.png',
-  boss: 'assets/cheetahs/boss.png'
+  boss: 'assets/cheetahs/boss.png',
+  portal: 'assets/landmarks/cheetah-portal.png',
+  palace: 'assets/landmarks/snack-palace.png'
 };
 
 const SPRITES = {};
@@ -102,7 +104,7 @@ function freshState() {
     waveActive: false, spawning: false, spawnQueue: [], spawnTimer: 0, totalThisWave: 0, defeatedThisWave: 0,
     paused: false, gameOver: false, countdownActive: false, elapsed: 0, selectedPlaced: null,
     autoStart: false, autoStartCountdown: 0, portalPulse: 0, portalLabelUntil: 0,
-    portalBossUntil: 0, palaceHit: 0
+    portalBossUntil: 0, palaceHit: 0, celebrationUntil: 0
   };
 }
 
@@ -613,6 +615,17 @@ function finishWave() {
   state.coins += bonus;
   els.bossAlert.hidden = true;
   addFloater(BASE_W / 2, 55, `Wave bonus +${bonus} 🪙`, '#5a338f');
+  state.celebrationUntil = state.elapsed + 1.8;
+  const partyColors = ['#ff5e91', '#ffd957', '#57c9f5', '#55d6a8', '#7c4dff', '#ff765f'];
+  for (let i = 0; i < 48; i++) {
+    state.particles.push({
+      x: 160 + Math.random() * 680, y: -10 - Math.random() * 80,
+      vx: -24 + Math.random() * 48, vy: 85 + Math.random() * 100,
+      life: 1.45 + Math.random() * .55, maxLife: 2, size: 4 + Math.random() * 5,
+      color: partyColors[i % partyColors.length], ring: false, shape: 'confetti',
+      rotation: Math.random() * Math.PI, spin: -7 + Math.random() * 14
+    });
+  }
   showToast(`Wave ${state.wave} cleared! Snack Palace secured ✨`);
   playChord([380, 480, 620, 760], .15);
   if (state.autoStart) state.autoStartCountdown = 3;
@@ -649,6 +662,7 @@ function updateParticles(dt) {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.vy += 90 * dt;
+      if (p.shape === 'confetti') p.rotation += p.spin * dt;
     }
   }
   for (const f of state.floaters) {
@@ -794,6 +808,7 @@ function draw() {
   drawPortal();
   drawSnackPalace();
   drawDecor();
+  drawAmbientFriends();
   drawTowers();
   drawProjectiles();
   drawEnemies();
@@ -807,6 +822,18 @@ function drawMeadow() {
   gradient.addColorStop(1, '#a6cd7e');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, BASE_W, BASE_H);
+
+  // Layered storybook hills make the board feel like a playful illustrated world.
+  ctx.fillStyle = 'rgba(255,239,132,.22)';
+  ctx.beginPath();
+  ctx.ellipse(185, 26, 235, 80, 0, 0, Math.PI * 2);
+  ctx.ellipse(610, 2, 310, 88, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(73,166,103,.13)';
+  ctx.beginPath();
+  ctx.ellipse(185, 610, 270, 100, 0, 0, Math.PI * 2);
+  ctx.ellipse(730, 625, 350, 120, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.globalAlpha = .16;
   for (let x = 10; x < BASE_W; x += 42) {
@@ -870,18 +897,18 @@ function tracePath() {
 function drawPortal() {
   const pulse = state.portalPulse || 0;
   const bossMode = state.elapsed < state.portalBossUntil;
-  const x = 31;
+  const x = 35;
   const y = 130;
   ctx.save();
   ctx.translate(x, y);
 
-  const glow = ctx.createRadialGradient(0, 0, 5, 0, 0, 56 + pulse * 7);
+  const glow = ctx.createRadialGradient(0, 0, 5, 0, 0, 61 + pulse * 8);
   glow.addColorStop(0, bossMode ? 'rgba(255,70,95,.9)' : 'rgba(55,27,105,.96)');
   glow.addColorStop(.45, bossMode ? 'rgba(255,150,55,.5)' : 'rgba(113,88,255,.45)');
   glow.addColorStop(1, 'rgba(70,40,120,0)');
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.ellipse(0, 0, 63 + pulse * 6, 79 + pulse * 7, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 66 + pulse * 6, 83 + pulse * 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = bossMode ? '#3d1026' : '#28194e';
@@ -889,9 +916,7 @@ function drawPortal() {
   ctx.ellipse(0, 0, 28 + pulse * 2, 52 + pulse * 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  const colors = bossMode
-    ? ['#ff435f', '#ff9c3f', '#ffd65a']
-    : ['#ff77b7', '#ffca5c', '#72df91', '#6ed6ff', '#a989ff'];
+  const colors = bossMode ? ['#ff435f', '#ff9c3f', '#ffd65a'] : ['#ff77b7', '#ffca5c', '#72df91', '#6ed6ff'];
   ctx.lineCap = 'round';
   colors.forEach((color, index) => {
     ctx.strokeStyle = color;
@@ -903,6 +928,12 @@ function drawPortal() {
       state.elapsed * (index % 2 ? -.9 : .8) + index + Math.PI * 1.2);
     ctx.stroke();
   });
+
+  if (spriteReady('portal')) {
+    const portalScale = 1 + pulse * .035;
+    ctx.globalAlpha = 1;
+    ctx.drawImage(SPRITES.portal, -64 * portalScale, -80 * portalScale, 128 * portalScale, 160 * portalScale);
+  }
 
   ctx.globalAlpha = .75;
   ctx.font = `${15 + pulse * 2}px serif`;
@@ -917,10 +948,10 @@ function drawPortal() {
   ctx.save();
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  roundRect(8, 42, 116, 25, 12, 'rgba(50,30,79,.88)');
+  roundRect(5, 41, 124, 26, 13, 'rgba(50,30,79,.9)');
   ctx.fillStyle = '#fff6d7';
   ctx.font = '900 11px Nunito';
-  ctx.fillText(bossMode ? '⚠ ALPHA PORTAL' : 'CHEETAH PORTAL', 18, 55);
+  ctx.fillText(bossMode ? '⚠ ALPHA PORTAL' : 'RAINBOW PORTAL', 14, 55);
   if (state.elapsed < state.portalLabelUntil) {
     roundRect(9, 87, 85, 28, 14, bossMode ? '#e94a66' : '#7257c9');
     ctx.fillStyle = '#fff';
@@ -933,55 +964,41 @@ function drawPortal() {
 function drawSnackPalace() {
   const hit = state.palaceHit || 0;
   const shake = hit ? Math.sin(state.elapsed * 70) * 7 * hit : 0;
-  const x = 947 + shake;
-  const y = 486;
+  const x = 925 + shake;
+  const y = 482;
   ctx.save();
   ctx.translate(x, y);
 
   ctx.fillStyle = 'rgba(56,45,66,.2)';
   ctx.beginPath();
-  ctx.ellipse(0, 58, 68, 17, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 66, 78, 18, 0, 0, Math.PI * 2);
   ctx.fill();
+  if (spriteReady('palace')) {
+    ctx.globalAlpha = hit ? .75 + Math.sin(state.elapsed * 45) * .2 : 1;
+    ctx.drawImage(SPRITES.palace, -88, -92, 176, 176);
+    ctx.globalAlpha = 1;
+  } else {
+    roundRect(-58, -48, 116, 110, 18, '#ffb66f');
+  }
 
-  // Palace towers and warm pantry walls.
-  roundRect(-48, -42, 95, 98, 12, hit ? '#ffd0d5' : '#fff0b2');
-  roundRect(-58, -28, 30, 83, 8, '#ef9b63');
-  roundRect(27, -28, 30, 83, 8, '#ef9b63');
-  ctx.fillStyle = '#d76565';
-  ctx.beginPath();
-  ctx.moveTo(-64, -27); ctx.lineTo(-43, -61); ctx.lineTo(-22, -27); ctx.closePath(); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(21, -27); ctx.lineTo(42, -61); ctx.lineTo(63, -27); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#e97a68';
-  ctx.beginPath();
-  ctx.moveTo(-51, -42); ctx.lineTo(0, -83); ctx.lineTo(51, -42); ctx.closePath(); ctx.fill();
-
-  // Road-facing pantry door and snack windows.
-  roundRect(-58, 8, 31, 47, 10, '#70466b');
-  ctx.fillStyle = '#fbe785';
-  ctx.beginPath(); ctx.arc(-36, 31, 3, 0, Math.PI * 2); ctx.fill();
-  ['🍊', '🍉', '🍪'].forEach((snack, index) => {
-    ctx.font = '20px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(snack, -17 + index * 25, -8 + (index === 1 ? 5 : 0));
-  });
-  roundRect(-39, -38, 78, 20, 9, '#714968');
-  ctx.fillStyle = '#fff5c9';
-  ctx.font = '900 9px Nunito';
-  ctx.fillText('SNACK PALACE', 0, -28);
+  roundRect(-60, -93, 120, 24, 12, '#6040b8');
+  ctx.fillStyle = '#fff7c8';
+  ctx.font = '900 10px Nunito';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🍪 SNACK PALACE 🍊', 0, -81);
 
   // Remaining supplies visually shrink as lives are lost.
   const baskets = Math.max(0, Math.ceil(state.lives / 4));
   ctx.font = '16px serif';
-  for (let i = 0; i < baskets; i++) ctx.fillText('🧺', -32 + i * 16, 45);
+  for (let i = 0; i < baskets; i++) ctx.fillText('🧺', -32 + i * 16, 63);
 
   if (hit > 0) {
     ctx.globalAlpha = hit;
     ctx.font = '18px serif';
     for (let i = 0; i < 6; i++) {
       const angle = i * Math.PI / 3 + state.elapsed * 2;
-      ctx.fillText(i % 2 ? '✨' : '🍪', Math.cos(angle) * (55 + (1 - hit) * 25), Math.sin(angle) * 45);
+      ctx.fillText(i % 2 ? '✨' : '🍪', Math.cos(angle) * (68 + (1 - hit) * 25), Math.sin(angle) * 55);
     }
   }
   ctx.restore();
@@ -996,6 +1013,33 @@ function drawDecor() {
     ctx.fillText(emoji, x, y);
   }
   ctx.globalAlpha = 1;
+}
+
+function drawAmbientFriends() {
+  const butterflies = [
+    { x: 245, y: 63, color: '#ff5e91', phase: 0 },
+    { x: 742, y: 175, color: '#7c4dff', phase: 2.1 },
+    { x: 145, y: 395, color: '#57c9f5', phase: 4.3 }
+  ];
+  for (const butterfly of butterflies) {
+    const bob = Math.sin(state.elapsed * 2 + butterfly.phase) * 5;
+    const flap = 4 + Math.abs(Math.sin(state.elapsed * 7 + butterfly.phase)) * 5;
+    ctx.save();
+    ctx.translate(butterfly.x, butterfly.y + bob);
+    ctx.fillStyle = butterfly.color;
+    ctx.strokeStyle = 'rgba(48,32,94,.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(-flap, 0, flap, 6, -.35, 0, Math.PI * 2);
+    ctx.ellipse(flap, 0, flap, 6, .35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#30205e';
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 2, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 function drawTowers() {
@@ -1086,6 +1130,8 @@ function drawEnemies() {
       const spriteSize = enemy.kind === 'boss' ? enemy.size * 2.85 : enemy.size * 2.7;
       const bob = Math.sin(state.elapsed * (enemy.kind === 'swift' ? 14 : 9) + enemy.runPhase) * 1.4;
       ctx.save();
+      const hit = Math.max(0, enemy.hitFlash / .09);
+      ctx.scale(1 + hit * .18, 1 - hit * .13);
       ctx.scale(enemy.direction || 1, 1);
       ctx.drawImage(SPRITES[enemy.kind], -spriteSize / 2, -spriteSize / 2 + bob, spriteSize, spriteSize);
       ctx.restore();
@@ -1098,6 +1144,11 @@ function drawEnemies() {
       ctx.beginPath();
       ctx.ellipse(0, enemy.size * .28, enemy.size * .58, enemy.size * .24, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.font = `${Math.max(14, enemy.size * .55)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⭐', -enemy.size * .56, -enemy.size * .54);
+      ctx.fillText('✨', enemy.size * .56, -enemy.size * .48);
       ctx.beginPath();
       ctx.moveTo(-enemy.size * .42, enemy.size * .12);
       ctx.lineTo(enemy.size * .42, enemy.size * .42);
@@ -1319,6 +1370,13 @@ function drawEffects() {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius + (p.maxRadius - p.radius) * progress, 0, Math.PI * 2);
       ctx.stroke();
+    } else if (p.shape === 'confetti') {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size, -p.size * .35, p.size * 2, p.size * .7);
+      ctx.restore();
     } else {
       ctx.fillStyle = p.color;
       ctx.beginPath();
@@ -1327,6 +1385,24 @@ function drawEffects() {
     }
   }
   ctx.globalAlpha = 1;
+
+  if (state.elapsed < state.celebrationUntil) {
+    const left = state.celebrationUntil - state.elapsed;
+    const bounce = 1 + Math.sin((1.8 - left) * 8) * Math.min(.08, left * .05);
+    ctx.save();
+    ctx.translate(BASE_W / 2, 92);
+    ctx.scale(bounce, bounce);
+    roundRect(-122, -28, 244, 56, 22, 'rgba(81,48,182,.94)');
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = '#fff7c8';
+    ctx.font = '900 23px Baloo 2';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✨ PALACE SAVED! ✨', 0, 1);
+    ctx.restore();
+  }
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   for (const f of state.floaters) {

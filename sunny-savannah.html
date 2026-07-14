@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Build a happy savannah, care for animals, and help visitors meet their new wild friends." />
+    <meta name="theme-color" content="#f7c94b" />
+    <title>Sunny Savannah</title>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=Fredoka:wght@500;600;700&display=swap');
+
+:root {
+  --ink: #284334;
+  --muted: #718073;
+  --leaf: #3b8f5b;
+  --leaf-dark: #21643f;
+  --sun: #f6c945;
+  --coral: #ef795d;
+  --cream: #fffaf0;
+  --paper: rgba(255, 255, 255, .94);
+  --line: #e5eadc;
+  --shadow: 0 16px 40px rgba(74, 92, 55, .13), 0 4px 0 rgba(54, 99, 62, .05);
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: #f8f0d8; }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background:
+    radial-gradient(circle at 9% 5%, rgba(246,201,69,.34) 0 2px, transparent 3px) 0 0/42px 42px,
+    linear-gradient(150deg, #fff7df, #edf5df 50%, #f8efd8);
+}
+button { font: inherit; }
+button:focus-visible { outline: 3px solid #176846; outline-offset: 3px; }
+
+.app-shell { width: min(1520px, calc(100% - 32px)); margin: 16px auto 12px; }
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr minmax(270px, 410px) 1fr;
+  align-items: center;
+  gap: 24px;
+  min-height: 76px;
+  padding: 8px 16px;
+}
+.brand { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; }
+.brand-sun { width: 51px; height: 51px; display: grid; place-items: center; border-radius: 18px; background: #fff; box-shadow: 0 6px 16px rgba(107,97,47,.13); font-size: 31px; }
+.brand > span:last-child { display: flex; flex-direction: column; font-family: 'Fredoka'; line-height: .88; }
+.brand b { color: #df9637; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; }
+.brand strong { font-size: 27px; }
+.day-progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; padding: 10px 14px; border: 2px solid #fff; border-radius: 18px; background: rgba(255,255,255,.74); box-shadow: 0 7px 18px rgba(75,83,45,.08); }
+.day-progress > span { font: 700 14px 'Fredoka'; }
+.day-progress small { color: var(--muted); font-size: 10px; font-weight: 800; }
+.day-track { height: 10px; overflow: hidden; border-radius: 99px; background: #e6ead9; box-shadow: inset 0 2px 4px rgba(50,70,40,.1); }
+.day-track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #61b76e, #f2c644); transition: width .45s ease; }
+.resources { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.resources > div { display: flex; gap: 7px; align-items: center; min-width: 75px; padding: 9px 12px; border: 2px solid #fff; border-radius: 15px; background: rgba(255,255,255,.78); box-shadow: 0 5px 14px rgba(65,83,45,.08); }
+.resources b { font: 700 17px 'Fredoka'; }
+.round-btn { width: 42px; height: 42px; border: 2px solid #fff; border-radius: 14px; background: rgba(255,255,255,.78); cursor: pointer; }
+
+.game-layout { display: grid; grid-template-columns: 240px minmax(620px, 1fr) 260px; gap: 14px; align-items: stretch; }
+.panel { border: 3px solid rgba(255,255,255,.9); border-radius: 26px; background: var(--paper); box-shadow: var(--shadow); }
+.animal-shop, .mission-panel { padding: 19px 16px; }
+.panel-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kicker { color: #d48231; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; }
+h1, h2 { margin: 4px 0 0; font-family: 'Fredoka'; line-height: 1; }
+h1 { font-size: 23px; }
+h2 { font-size: 22px; }
+.step-pill { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 10px; background: #dff0d7; color: #39754b; font: 700 13px 'Fredoka'; }
+.step-pill.coral { background: #ffe2d9; color: #bf5f47; }
+.panel-intro { margin: 10px 0 16px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+
+.animal-cards { display: grid; gap: 9px; }
+.animal-card { position: relative; width: 100%; display: grid; grid-template-columns: 53px 1fr; align-items: center; gap: 9px; min-height: 76px; padding: 9px; text-align: left; color: var(--ink); border: 2px solid #edf0e7; border-radius: 17px; background: #fff; box-shadow: 0 4px 0 #edf0e7; cursor: pointer; transition: .18s ease; }
+.animal-card:hover:not(:disabled) { transform: translateY(-2px); border-color: #bdd8b4; }
+.animal-card.active { border-color: #65a568; background: #f2f9e9; box-shadow: 0 4px 0 #a4c69c, 0 7px 16px rgba(52,100,56,.1); }
+.animal-card:disabled { opacity: .48; cursor: default; }
+.animal-art { width: 53px; height: 53px; display: grid; place-items: center; border-radius: 15px; background: linear-gradient(145deg, #fff2c7, #f4e0a0); font-size: 34px; }
+.animal-card:nth-child(2) .animal-art { background: linear-gradient(145deg, #e9f3c8, #ccdda0); }
+.animal-card:nth-child(3) .animal-art { background: linear-gradient(145deg, #ddf2ef, #b7dcd5); }
+.animal-card:nth-child(4) .animal-art { background: linear-gradient(145deg, #f2eee6, #d9d2c2); }
+.animal-card:nth-child(5) .animal-art { background: linear-gradient(145deg, #ffe4a8, #e9bb62); }
+.animal-copy { display: flex; min-width: 0; flex-direction: column; }
+.animal-copy strong { font: 700 15px 'Fredoka'; }
+.animal-copy small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+.animal-copy em { margin-top: 5px; color: #648055; font-size: 9px; font-style: normal; font-weight: 800; }
+.animal-price { position: absolute; top: 8px; right: 9px; color: #a6721b; font-size: 9px; font-weight: 800; }
+.habitat-key { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 8px; margin-top: 18px; padding: 11px; border: 1px dashed #cbd6bd; border-radius: 15px; background: #fbfcf7; color: var(--muted); font-size: 9px; }
+.habitat-key b { grid-column: 1 / -1; color: var(--ink); font-size: 10px; }
+.habitat-key span { display: flex; align-items: center; gap: 5px; }
+.key-dot { width: 9px; height: 9px; border-radius: 50%; background: #afd072; }
+.key-dot.shade { background: #6b9c6a; }
+.key-dot.water { background: #69b7c4; }
+
+.savannah-panel { min-width: 0; overflow: hidden; background: #fffdf5; }
+.savannah-heading { min-height: 65px; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; }
+.weather { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 6px; align-items: center; }
+.weather > span { grid-row: 1 / 3; font-size: 29px; }
+.weather b { font: 700 15px 'Fredoka'; }
+.weather small { color: var(--leaf); font-size: 8px; font-weight: 800; }
+.savannah { position: relative; height: clamp(455px, 59vh, 590px); min-height: 455px; overflow: hidden; border-top: 2px solid #f1dfad; border-bottom: 2px solid #dfd6ad; background: linear-gradient(#8ed7df 0 24%, #c7df8a 24% 42%, #dcc772 42% 100%); isolation: isolate; }
+.sun-glow { position: absolute; top: 28px; right: 72px; width: 58px; height: 58px; border-radius: 50%; background: #ffe67b; box-shadow: 0 0 0 14px rgba(255,235,128,.21), 0 0 50px #ffef8d; }
+.distant-hills { position: absolute; left: -5%; right: -5%; top: 17%; height: 34%; background: #91bd72; clip-path: polygon(0 54%, 11% 35%, 24% 52%, 36% 24%, 49% 54%, 63% 34%, 74% 49%, 88% 18%, 100% 49%, 100% 100%, 0 100%); }
+.distant-hills::after { content: ''; position: absolute; inset: 28% 0 0; background: #b6cf78; clip-path: polygon(0 55%, 18% 15%, 35% 52%, 56% 18%, 74% 51%, 90% 12%, 100% 35%, 100% 100%, 0 100%); }
+.acacia { position: absolute; z-index: 3; width: 125px; height: 112px; pointer-events: none; }
+.acacia::before { content: ''; position: absolute; left: 57px; top: 35px; width: 10px; height: 76px; border-radius: 50%; background: #6f6335; transform: rotate(2deg); }
+.acacia i, .acacia i::before, .acacia i::after { position: absolute; display: block; border-radius: 50%; background: #487945; }
+.acacia i { width: 102px; height: 45px; left: 10px; top: 13px; }
+.acacia i::before, .acacia i::after { content: ''; width: 62px; height: 38px; top: -8px; }
+.acacia i::before { left: -1px; }.acacia i::after { right: -1px; }
+.acacia.a1 { left: 5%; top: 29%; }.acacia.a2 { right: 7%; top: 22%; transform: scale(.76); }
+.pond { position: absolute; z-index: 2; left: 43%; top: 32%; width: 210px; height: 100px; border: 8px solid rgba(196,177,101,.6); border-radius: 50%; background: linear-gradient(160deg, #7ed2d5, #4aa7b6); transform: rotate(-4deg); box-shadow: inset 15px 10px 22px rgba(255,255,255,.3); }
+.pond span { position: absolute; right: 25px; bottom: 8px; font-size: 24px; }
+.habitat-grid { position: absolute; z-index: 5; inset: 24% 2% 16%; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(4, 1fr); gap: 5px; }
+.habitat-cell { position: relative; border: 2px dashed transparent; border-radius: 18px; background: transparent; cursor: default; transition: .16s ease; }
+.habitat-cell.valid { cursor: pointer; border-color: rgba(255,255,255,.9); background: rgba(255,255,210,.2); animation: tileGlow 1s ease-in-out infinite alternate; }
+.habitat-cell.valid:hover { transform: scale(1.05); background: rgba(255,255,220,.48); }
+.habitat-cell.invalid { background: rgba(110,80,50,.06); cursor: not-allowed; }
+@keyframes tileGlow { to { box-shadow: inset 0 0 18px rgba(255,252,179,.34), 0 0 12px rgba(255,255,230,.5); } }
+.placed-animal { position: absolute; inset: 0; display: grid; place-items: center; border: 0; background: transparent; cursor: pointer; filter: drop-shadow(0 6px 3px rgba(74,74,30,.2)); animation: animalIn .35s cubic-bezier(.2,1.5,.5,1); }
+.placed-animal .emoji { font-size: clamp(40px, 4vw, 60px); transition: transform .16s; }
+.placed-animal:hover .emoji { transform: translateY(-4px) rotate(-3deg); }
+.placed-animal.selected::after { content: ''; position: absolute; width: 68px; height: 22px; bottom: 11px; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 3px #f3c547; }
+.placed-animal .animal-name { position: absolute; left: 50%; bottom: 2px; z-index: 2; transform: translateX(-50%); padding: 3px 7px; border-radius: 8px; color: #fff; background: rgba(37,73,48,.86); font-size: 8px; font-weight: 800; white-space: nowrap; }
+.mood-bubble { position: absolute; top: 5px; right: 2px; min-width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50% 50% 50% 6px; background: #fff; box-shadow: 0 3px 8px rgba(40,60,30,.17); font-size: 13px; }
+@keyframes animalIn { from { transform: scale(.2) translateY(-45px); opacity: 0; } }
+.visitor-path { position: absolute; z-index: 4; left: 0; right: 0; bottom: 3%; height: 72px; border-top: 3px dashed rgba(160,128,64,.34); border-bottom: 3px dashed rgba(160,128,64,.34); background: rgba(229,205,134,.74); transform: rotate(-1deg); }
+.gate { position: absolute; z-index: 7; left: 8px; bottom: 25px; width: 72px; height: 70px; border-left: 7px solid #765936; border-right: 7px solid #765936; border-top: 9px solid #765936; }
+.gate span { position: absolute; left: 50%; top: -21px; transform: translateX(-50%); padding: 3px 6px; border-radius: 4px; color: white; background: #3f8050; font-size: 7px; font-weight: 800; }
+.visitors { position: absolute; z-index: 8; left: 78px; right: 12px; bottom: 23px; height: 62px; }
+.visitor { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; border: 0; background: transparent; cursor: pointer; animation: visitorWalk .55s ease both; transition: transform .16s; }
+.visitor:hover { transform: translateY(-4px); }
+.visitor .person { font-size: 30px; filter: drop-shadow(0 3px 2px rgba(50,50,30,.17)); }
+.visitor .request { min-width: 30px; margin-bottom: -3px; padding: 3px 5px; border-radius: 9px 9px 9px 2px; background: white; box-shadow: 0 2px 7px rgba(40,60,30,.16); font-size: 11px; }
+@keyframes visitorWalk { from { opacity: 0; transform: translateX(-80px); } }
+.speech { position: absolute; z-index: 20; left: 50%; top: 22px; transform: translateX(-50%); max-width: 70%; padding: 9px 14px; border: 2px solid white; border-radius: 14px; color: #fff; background: rgba(39,87,58,.91); box-shadow: 0 6px 20px rgba(30,60,30,.18); font-size: 11px; font-weight: 800; text-align: center; }
+
+.care-dock { min-height: 107px; display: grid; grid-template-columns: 150px 1fr 150px; gap: 12px; align-items: center; padding: 12px 17px; background: #fffdf8; }
+.selected-friend { display: flex; align-items: center; gap: 8px; }
+.selected-avatar { width: 45px; height: 45px; display: grid; place-items: center; border-radius: 14px; background: #fff0bd; font-size: 29px; }
+.selected-friend > span:last-child { min-width: 0; display: flex; flex-direction: column; }
+.selected-friend small { color: var(--muted); font-size: 7px; font-weight: 800; letter-spacing: 1px; }
+.selected-friend b { overflow: hidden; font: 700 13px 'Fredoka'; text-overflow: ellipsis; white-space: nowrap; }
+.care-actions { display: flex; justify-content: center; gap: 7px; }
+.care-btn { min-width: 93px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 6px; padding: 8px 9px; text-align: left; color: var(--ink); border: 1px solid #e8dfc9; border-radius: 13px; background: #fff7dc; cursor: pointer; transition: .15s; }
+.care-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(95,90,50,.1); }
+.care-btn:disabled { opacity: .4; cursor: default; }
+.care-btn > span { grid-row: 1 / 3; align-self: center; font-size: 22px; }
+.care-btn b { font-size: 9px; }.care-btn small { color: var(--muted); font-size: 7px; }
+.care-btn.water { background: #e8f8fa; }.care-btn.play { background: #f2edff; }
+.needs { display: grid; grid-template-columns: 1fr; gap: 3px; }
+.needs label { display: flex; justify-content: space-between; color: var(--muted); font-size: 7px; font-weight: 800; }
+.need-track { height: 7px; overflow: hidden; margin-bottom: 3px; border-radius: 99px; background: #ebeadf; }
+.need-track i { display: block; width: 0; height: 100%; background: #efaa48; border-radius: inherit; transition: width .35s; }
+.need-track.water i { background: #55b4c4; }
+
+.mission-panel { display: flex; flex-direction: column; }
+.goal-list { display: grid; gap: 8px; }
+.goal { display: grid; grid-template-columns: 34px 1fr auto; gap: 9px; align-items: center; min-height: 57px; padding: 8px; border: 1px solid #e5e9df; border-radius: 14px; background: #fff; transition: .28s; }
+.goal.done { border-color: #b5d4ae; background: #f1f8ec; }
+.goal-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: #f4eddb; font-size: 20px; }
+.goal-copy { display: flex; flex-direction: column; }
+.goal-copy b { font: 600 11px 'Fredoka'; }.goal-copy small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.goal-check { width: 21px; height: 21px; display: grid; place-items: center; border: 2px solid #dce2d6; border-radius: 50%; color: transparent; font-size: 11px; }
+.goal.done .goal-check { color: white; border-color: #58a265; background: #58a265; animation: pop .3s ease; }
+@keyframes pop { 50% { transform: scale(1.35); } }
+.visitor-card { margin-top: 14px; padding: 12px; border-radius: 17px; background: linear-gradient(145deg, #fff4d1, #fff9e8); border: 1px solid #f0d892; }
+.visitor-card-top { display: flex; align-items: center; gap: 9px; }
+.visitor-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: #fff; font-size: 20px; }
+.visitor-card-top > span:last-child { display: flex; flex-direction: column; }
+.visitor-card-top small { color: #a3762e; font-size: 7px; font-weight: 800; letter-spacing: 1px; }.visitor-card-top b { font: 600 11px 'Fredoka'; }
+.visitor-card p { margin: 9px 0; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.visitor-card button { width: 100%; display: flex; justify-content: space-between; padding: 8px 10px; color: #fff; border: 0; border-radius: 10px; background: #e39a38; font-size: 9px; font-weight: 800; cursor: pointer; }
+.visitor-card button:disabled { opacity: .5; cursor: default; }
+.finish-day { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding: 12px 13px; color: white; text-align: left; border: 0; border-radius: 15px; background: linear-gradient(135deg, #4e9f64, #267449); box-shadow: 0 5px 0 #1d5d3a; cursor: pointer; }
+.finish-day:disabled { color: #9ca49b; background: #e8ece5; box-shadow: 0 4px 0 #d8ddd5; cursor: default; }
+.finish-day span { display: flex; flex-direction: column; }.finish-day small { font-size: 6px; letter-spacing: 1px; }.finish-day b { font: 600 13px 'Fredoka'; }.finish-day i { font-size: 24px; font-style: normal; }
+.footer-note { display: flex; justify-content: space-between; padding: 11px 17px 0; color: #768276; font-size: 10px; }
+.footer-note button { color: #758275; border: 0; border-bottom: 1px solid #aab3a8; background: none; cursor: pointer; }
+
+.toast { position: fixed; z-index: 100; left: 50%; bottom: 25px; transform: translate(-50%, 18px); padding: 10px 16px; border: 2px solid white; border-radius: 14px; color: white; background: #2f724c; box-shadow: 0 10px 30px rgba(30,60,35,.24); font-size: 11px; font-weight: 800; opacity: 0; pointer-events: none; transition: .25s; }
+.toast.show { transform: translate(-50%, 0); opacity: 1; }.toast.error { background: #bd5a49; }
+.welcome-dialog { width: min(470px, calc(100% - 30px)); padding: 26px 30px 28px; color: var(--ink); text-align: center; border: 4px solid white; border-radius: 28px; background: #fffdf5; box-shadow: 0 30px 90px rgba(39,69,44,.3); }
+.welcome-dialog::backdrop { background: rgba(35,68,45,.58); backdrop-filter: blur(5px); }
+.dialog-close { position: absolute; top: 11px; right: 13px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #edf1e7; color: #60705f; cursor: pointer; }
+.welcome-art { position: relative; height: 104px; display: flex; justify-content: center; align-items: flex-end; gap: 38px; margin-bottom: 13px; border-radius: 18px; background: linear-gradient(#8ed5df 0 54%, #c9dc86 54%); overflow: hidden; }
+.welcome-art span { position: relative; z-index: 2; font-size: 62px; filter: drop-shadow(0 6px 3px rgba(50,70,40,.18)); }
+.welcome-art i { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); font-size: 78px; font-style: normal; }
+.welcome-dialog h2 { margin: 7px 0 8px; font-size: 29px; }
+.welcome-dialog > p { margin: 0 auto 16px; max-width: 350px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.welcome-dialog ol { display: flex; justify-content: center; gap: 7px; margin: 0 0 20px; padding: 0; list-style: none; }
+.welcome-dialog li { flex: 1; padding: 8px 6px; border-radius: 10px; background: #f3f6ec; color: var(--muted); font-size: 8px; }.welcome-dialog li b { display: block; color: var(--leaf); font-size: 10px; }
+.start-btn { min-width: 220px; padding: 12px 17px; color: white; border: 0; border-radius: 13px; background: linear-gradient(135deg, #54a768, #28754a); box-shadow: 0 5px 0 #1f5f3d; font-weight: 800; cursor: pointer; }.start-btn span { margin-left: 12px; }
+.day-dialog .day-emoji { display: block; margin-bottom: 8px; font-size: 63px; }.confetti { color: #e8b637; font-size: 19px; letter-spacing: 12px; }.day-dialog h2 { font-size: 28px; }
+
+@media (max-width: 1180px) {
+  .game-layout { grid-template-columns: 215px minmax(560px, 1fr); }
+  .mission-panel { grid-column: 1 / -1; display: grid; grid-template-columns: 220px 1fr 235px; gap: 12px; align-items: center; }
+  .mission-panel .panel-intro { grid-column: 1; }.mission-panel .goal-list { grid-column: 2; grid-row: 1 / 3; grid-template-columns: repeat(2, 1fr); }
+  .visitor-card { grid-column: 3; grid-row: 1 / 3; margin: 0; }.finish-day { grid-column: 3; margin: 0; align-self: end; }
+}
+@media (max-width: 850px) {
+  .app-shell { width: min(100% - 18px, 720px); }
+  .topbar { grid-template-columns: 1fr auto; gap: 10px; }.day-progress { grid-column: 1 / -1; grid-row: 2; }.resources > div { min-width: 62px; }
+  .game-layout { grid-template-columns: 1fr; }.animal-shop { order: 1; }.savannah-panel { order: 2; }.mission-panel { order: 3; display: flex; }
+  .animal-cards { grid-template-columns: repeat(2, 1fr); }.habitat-key { display: none; }
+  .savannah { height: 500px; }.mission-panel .goal-list { grid-template-columns: repeat(2, 1fr); }.finish-day { margin-top: 12px; }
+}
+@media (max-width: 580px) {
+  .app-shell { width: 100%; margin-top: 0; }.topbar { padding: 10px; }.brand strong { font-size: 22px; }.brand-sun { width: 43px; height: 43px; font-size: 26px; }.resources > div { padding: 7px; min-width: 55px; }.round-btn { display: none; }
+  .panel { border-radius: 20px; }.animal-shop, .mission-panel { margin: 0 7px; padding: 15px 12px; }.animal-card { grid-template-columns: 43px 1fr; min-height: 65px; padding: 7px; }.animal-art { width: 43px; height: 43px; font-size: 27px; }.animal-copy small { display: none; }
+  .savannah-heading { padding: 11px 14px; }.savannah { height: 465px; min-height: 465px; }.habitat-grid { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(7, 1fr); inset: 22% 2% 15%; }.pond { left: 35%; width: 170px; }.acacia.a2 { display: none; }
+  .care-dock { grid-template-columns: 1fr; gap: 8px; }.selected-friend { justify-content: center; }.care-actions { order: 3; }.needs { grid-template-columns: 1fr 1fr; }.needs label { grid-row: 1; }.needs .need-track { grid-row: 2; }.mission-panel .goal-list { grid-template-columns: 1fr; }
+  .footer-note { padding: 10px 14px 18px; }.footer-note span { max-width: 75%; }.welcome-dialog { padding: 23px 19px; }
+}
+
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Sunny Savannah home">
+          <span class="brand-sun">☀️</span>
+          <span><b>Sunny</b><strong>Savannah</strong></span>
+        </a>
+
+        <div class="day-progress" aria-label="Day progress">
+          <span id="dayLabel">Day 1</span>
+          <div class="day-track"><i id="dayProgress"></i></div>
+          <small id="goalCount">0 / 5 goals</small>
+        </div>
+
+        <div class="resources" aria-label="Sanctuary resources">
+          <div><span>🍃</span><b id="leaves">120</b></div>
+          <div><span>⭐</span><b id="stars">0</b></div>
+          <button id="soundBtn" class="round-btn" type="button" aria-label="Toggle sound">🔊</button>
+        </div>
+      </header>
+
+      <section class="game-layout">
+        <aside class="animal-shop panel">
+          <div class="panel-title">
+            <div>
+              <span class="kicker">YOUR WILD FRIENDS</span>
+              <h1>Choose an animal</h1>
+            </div>
+            <span class="step-pill">1</span>
+          </div>
+          <p class="panel-intro">Pick a friend, then find its favorite home on the map.</p>
+
+          <div id="animalCards" class="animal-cards"></div>
+
+          <div class="habitat-key">
+            <b>Habitat clues</b>
+            <span><i class="key-dot grass"></i> Soft grass</span>
+            <span><i class="key-dot shade"></i> Cool shade</span>
+            <span><i class="key-dot water"></i> Water edge</span>
+          </div>
+        </aside>
+
+        <section class="savannah-panel panel">
+          <div class="savannah-heading">
+            <div>
+              <span class="kicker">YOUR SAVANNAH</span>
+              <h2>Find everyone a happy home</h2>
+            </div>
+            <div class="weather"><span>☀️</span><b>28°</b><small>Perfect!</small></div>
+          </div>
+
+          <div id="savannah" class="savannah" aria-label="Savannah habitat grid">
+            <div class="sun-glow" aria-hidden="true"></div>
+            <div class="distant-hills" aria-hidden="true"></div>
+            <div class="acacia a1" aria-hidden="true"><i></i></div>
+            <div class="acacia a2" aria-hidden="true"><i></i></div>
+            <div class="pond" aria-hidden="true"><span>🪷</span></div>
+            <div id="habitatGrid" class="habitat-grid"></div>
+            <div class="visitor-path" aria-hidden="true"></div>
+            <div class="gate" aria-hidden="true"><span>WELCOME</span></div>
+            <div id="visitors" class="visitors" aria-label="Savannah visitors"></div>
+            <div id="speech" class="speech" role="status" aria-live="polite" hidden></div>
+          </div>
+
+          <div class="care-dock">
+            <div class="selected-friend">
+              <span id="selectedAvatar" class="selected-avatar">🦁</span>
+              <span><small>CARING FOR</small><b id="selectedName">Choose a friend</b></span>
+            </div>
+            <div class="care-actions">
+              <button class="care-btn food" type="button" data-care="food" disabled><span>🥕</span><b>Give food</b><small>−4 🍃</small></button>
+              <button class="care-btn water" type="button" data-care="water" disabled><span>💧</span><b>Give water</b><small>Free</small></button>
+              <button class="care-btn play" type="button" data-care="play" disabled><span>⚽</span><b>Play</b><small>+ joy</small></button>
+            </div>
+            <div class="needs">
+              <label><span>Full tummy</span><b id="foodValue">—</b></label>
+              <div class="need-track"><i id="foodBar"></i></div>
+              <label><span>Fresh water</span><b id="waterValue">—</b></label>
+              <div class="need-track water"><i id="waterBar"></i></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="mission-panel panel">
+          <div class="panel-title compact">
+            <div>
+              <span class="kicker">TODAY'S PUZZLE</span>
+              <h2>Happy habitats</h2>
+            </div>
+            <span class="step-pill coral">2</span>
+          </div>
+          <p class="panel-intro">Complete every card to earn a safari star.</p>
+
+          <div id="goalList" class="goal-list"></div>
+
+          <div class="visitor-card">
+            <div class="visitor-card-top">
+              <span class="visitor-icon">🎟️</span>
+              <span><small>VISITOR GATE</small><b id="visitorStatus">Guests are arriving…</b></span>
+            </div>
+            <p>Select an animal, then tap a visitor on the path to help them play together.</p>
+            <button id="inviteBtn" type="button">Invite a family <span>→</span></button>
+          </div>
+
+          <button id="finishDayBtn" class="finish-day" type="button" disabled>
+            <span><small>ALL GOALS COMPLETE</small><b>Finish the day</b></span><i>🌅</i>
+          </button>
+        </aside>
+      </section>
+
+      <footer class="footer-note">
+        <span>🌱 Tip: habitat tiles glow when they suit your chosen animal.</span>
+        <button id="resetBtn" type="button">Start over</button>
+      </footer>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="welcomeDialog" class="welcome-dialog">
+      <button id="closeWelcome" class="dialog-close" type="button" aria-label="Close">×</button>
+      <div class="welcome-art" aria-hidden="true"><span>🦒</span><i>🌳</i><span>🐘</span></div>
+      <span class="kicker">A COZY PUZZLE ADVENTURE</span>
+      <h2>Welcome, Junior Ranger!</h2>
+      <p>Place animals in their favorite habitats, keep their tummies full, and help visitors make a wild new friend.</p>
+      <ol>
+        <li><b>Choose</b> an animal</li>
+        <li><b>Place</b> it on a glowing tile</li>
+        <li><b>Care</b> for it and welcome guests</li>
+      </ol>
+      <button id="startBtn" class="start-btn" type="button">Open the savannah <span>→</span></button>
+    </dialog>
+
+    <dialog id="dayDialog" class="welcome-dialog day-dialog">
+      <div class="confetti" aria-hidden="true">✨ ⭐ ✨</div>
+      <span class="day-emoji">🌅</span>
+      <span class="kicker">SAVANNAH REPORT</span>
+      <h2>What a wonderfully wild day!</h2>
+      <p id="daySummary">Your animals are happy and your guests are smiling.</p>
+      <button id="nextDayBtn" class="start-btn" type="button">Play another puzzle <span>↻</span></button>
+    </dialog>
+
+    <script>
+'use strict';
+
+const ANIMALS = {
+  lion: { name: 'Leo the Lion', short: 'Leo', emoji: '🦁', cost: 24, habitat: ['grass', 'shade'], clue: 'Grass or shade', food: '🥩' },
+  giraffe: { name: 'Gigi the Giraffe', short: 'Gigi', emoji: '🦒', cost: 28, habitat: ['grass', 'shade'], clue: 'Near the trees', food: '🌿' },
+  elephant: { name: 'Ellie the Elephant', short: 'Ellie', emoji: '🐘', cost: 32, habitat: ['water'], clue: 'By the water', food: '🥕' },
+  zebra: { name: 'Ziggy the Zebra', short: 'Ziggy', emoji: '🦓', cost: 20, habitat: ['grass'], clue: 'Open grass', food: '🌾' },
+  cheetah: { name: 'Chase the Cheetah', short: 'Chase', emoji: '🐆', cost: 30, habitat: ['grass'], clue: 'Wide open grass', food: '🥩' }
+};
+
+const TERRAIN = [
+  'shade','shade','grass','grass','grass','shade','shade',
+  'shade','grass','grass','water','water','grass','shade',
+  'grass','grass','water','water','water','grass','grass',
+  'grass','grass','grass','grass','grass','grass','grass'
+];
+
+const VISITOR_FACES = ['🧒🏽','👧🏻','👦🏿','👩🏼','👨🏽','🧑🏻'];
+const VISITOR_NAMES = ['Mia', 'Noah', 'Ava', 'Sam', 'Luca', 'Zoe'];
+
+const state = {
+  leaves: 120,
+  stars: 0,
+  day: 1,
+  selectedType: null,
+  selectedId: null,
+  animals: [],
+  visitors: [],
+  actions: { placed: 0, fed: 0, watered: 0, played: 0, visits: 0 },
+  sound: true,
+  visitorSerial: 0
+};
+
+const goals = [
+  { key: 'placed', icon: '🏡', title: 'Happy homes', text: 'Place 2 animals', target: 2 },
+  { key: 'fed', icon: '🥕', title: 'Snack time', text: 'Give food twice', target: 2 },
+  { key: 'watered', icon: '💧', title: 'Water break', text: 'Give water twice', target: 2 },
+  { key: 'played', icon: '⚽', title: 'Play together', text: 'Play with an animal', target: 1 },
+  { key: 'visits', icon: '🎟️', title: 'Wild hello', text: 'Help 2 guests visit', target: 2 }
+];
+
+const $ = (selector) => document.querySelector(selector);
+const els = {
+  animalCards: $('#animalCards'), grid: $('#habitatGrid'), visitors: $('#visitors'), speech: $('#speech'),
+  leaves: $('#leaves'), stars: $('#stars'), dayLabel: $('#dayLabel'), dayProgress: $('#dayProgress'), goalCount: $('#goalCount'),
+  selectedAvatar: $('#selectedAvatar'), selectedName: $('#selectedName'), foodValue: $('#foodValue'), waterValue: $('#waterValue'),
+  foodBar: $('#foodBar'), waterBar: $('#waterBar'), goalList: $('#goalList'), visitorStatus: $('#visitorStatus'),
+  inviteBtn: $('#inviteBtn'), finishDayBtn: $('#finishDayBtn'), toast: $('#toast'), soundBtn: $('#soundBtn'),
+  welcomeDialog: $('#welcomeDialog'), dayDialog: $('#dayDialog'), daySummary: $('#daySummary')
+};
+
+let toastTimer;
+let speechTimer;
+let audioContext;
+
+function renderShop() {
+  els.animalCards.innerHTML = Object.entries(ANIMALS).map(([key, animal]) => {
+    const active = state.selectedType === key;
+    const owned = state.animals.some((item) => item.type === key);
+    return `<button class="animal-card${active ? ' active' : ''}" type="button" data-animal="${key}" aria-pressed="${active}">
+      <span class="animal-art">${animal.emoji}</span>
+      <span class="animal-copy"><strong>${animal.short}</strong><small>${animal.name.split(' the ')[1]}</small><em>${owned ? '✓ In the savannah' : animal.clue}</em></span>
+      <span class="animal-price">🍃 ${animal.cost}</span>
+    </button>`;
+  }).join('');
+
+  els.animalCards.querySelectorAll('.animal-card').forEach((card) => {
+    card.addEventListener('click', () => selectAnimalType(card.dataset.animal));
+  });
+}
+
+function renderGrid() {
+  els.grid.innerHTML = TERRAIN.map((terrain, index) => {
+    const animal = state.animals.find((item) => item.cell === index);
+    let status = '';
+    if (state.selectedType && !animal) status = ANIMALS[state.selectedType].habitat.includes(terrain) ? ' valid' : ' invalid';
+    const content = animal ? `<button class="placed-animal${state.selectedId === animal.id ? ' selected' : ''}" type="button" data-id="${animal.id}" aria-label="Select ${ANIMALS[animal.type].name}">
+      <span class="mood-bubble">${getMood(animal)}</span><span class="emoji">${ANIMALS[animal.type].emoji}</span><span class="animal-name">${ANIMALS[animal.type].short}</span>
+    </button>` : '';
+    return `<div class="habitat-cell${status}" data-cell="${index}" data-terrain="${terrain}">${content}</div>`;
+  }).join('');
+
+  els.grid.querySelectorAll('.habitat-cell').forEach((cell) => cell.addEventListener('click', (event) => {
+    if (event.target.closest('.placed-animal')) return;
+    placeAnimal(Number(cell.dataset.cell), cell.dataset.terrain);
+  }));
+  els.grid.querySelectorAll('.placed-animal').forEach((button) => button.addEventListener('click', () => selectPlacedAnimal(Number(button.dataset.id))));
+}
+
+function renderVisitors() {
+  els.visitors.innerHTML = state.visitors.map((visitor, index) => `<button class="visitor" type="button" data-id="${visitor.id}" style="left:${Math.min(index * 17, 82)}%" aria-label="Help ${visitor.name} visit ${ANIMALS[visitor.request].short}">
+    <span class="request">${ANIMALS[visitor.request].emoji}?</span><span class="person">${visitor.face}</span>
+  </button>`).join('');
+  els.visitors.querySelectorAll('.visitor').forEach((button) => button.addEventListener('click', () => completeVisit(Number(button.dataset.id))));
+  els.visitorStatus.textContent = state.visitors.length ? `${state.visitors.length} guest${state.visitors.length === 1 ? '' : 's'} waiting` : 'Invite someone new!';
+}
+
+function renderGoals() {
+  els.goalList.innerHTML = goals.map((goal) => {
+    const value = state.actions[goal.key];
+    const done = value >= goal.target;
+    return `<div class="goal${done ? ' done' : ''}"><span class="goal-icon">${goal.icon}</span><span class="goal-copy"><b>${goal.title}</b><small>${goal.text} · ${Math.min(value, goal.target)}/${goal.target}</small></span><i class="goal-check">✓</i></div>`;
+  }).join('');
+}
+
+function updateUI() {
+  els.leaves.textContent = state.leaves;
+  els.stars.textContent = state.stars;
+  els.dayLabel.textContent = `Day ${state.day}`;
+  const completed = goals.filter((goal) => state.actions[goal.key] >= goal.target).length;
+  els.dayProgress.style.width = `${completed / goals.length * 100}%`;
+  els.goalCount.textContent = `${completed} / ${goals.length} goals`;
+  els.finishDayBtn.disabled = completed < goals.length;
+  els.inviteBtn.disabled = !state.animals.length || state.visitors.length >= 5;
+
+  const selected = state.animals.find((animal) => animal.id === state.selectedId);
+  document.querySelectorAll('.care-btn').forEach((button) => { button.disabled = !selected; });
+  if (selected) {
+    const animal = ANIMALS[selected.type];
+    els.selectedAvatar.textContent = animal.emoji;
+    els.selectedName.textContent = animal.name;
+    els.foodValue.textContent = `${Math.round(selected.food)}%`;
+    els.waterValue.textContent = `${Math.round(selected.water)}%`;
+    els.foodBar.style.width = `${selected.food}%`;
+    els.waterBar.style.width = `${selected.water}%`;
+  } else {
+    els.selectedAvatar.textContent = '🐾';
+    els.selectedName.textContent = 'Choose a friend';
+    els.foodValue.textContent = '—';
+    els.waterValue.textContent = '—';
+    els.foodBar.style.width = '0';
+    els.waterBar.style.width = '0';
+  }
+  renderShop();
+  renderGrid();
+  renderVisitors();
+  renderGoals();
+}
+
+function selectAnimalType(type) {
+  state.selectedType = state.selectedType === type ? null : type;
+  state.selectedId = null;
+  if (state.selectedType) say(`${ANIMALS[type].emoji} Find ${ANIMALS[type].short} a ${ANIMALS[type].clue.toLowerCase()} tile.`);
+  updateUI();
+}
+
+function placeAnimal(cell, terrain) {
+  if (!state.selectedType) return;
+  const type = state.selectedType;
+  const animal = ANIMALS[type];
+  if (state.animals.some((item) => item.cell === cell)) return;
+  if (!animal.habitat.includes(terrain)) {
+    notify(`${animal.short} would be happier somewhere else!`, true);
+    tone(150, .1);
+    return;
+  }
+  if (state.leaves < animal.cost) {
+    notify(`You need ${animal.cost - state.leaves} more leaves.`, true);
+    return;
+  }
+  state.leaves -= animal.cost;
+  const placed = { id: Date.now(), type, cell, food: 58, water: 55, joy: 62 };
+  state.animals.push(placed);
+  state.actions.placed += 1;
+  state.selectedType = null;
+  state.selectedId = placed.id;
+  notify(`${animal.name} loves this spot! 🌿`);
+  say(`${animal.emoji} “This feels like home!”`);
+  tone(520, .12);
+  if (state.visitors.length === 0) inviteVisitor();
+  updateUI();
+}
+
+function selectPlacedAnimal(id) {
+  state.selectedId = id;
+  state.selectedType = null;
+  const animal = state.animals.find((item) => item.id === id);
+  say(`${ANIMALS[animal.type].emoji} ${getNeedMessage(animal)}`);
+  updateUI();
+}
+
+function careForSelected(action) {
+  const animal = state.animals.find((item) => item.id === state.selectedId);
+  if (!animal) return;
+  const info = ANIMALS[animal.type];
+  if (action === 'food') {
+    if (state.leaves < 4) return notify('You need 4 leaves for a snack.', true);
+    state.leaves -= 4;
+    animal.food = Math.min(100, animal.food + 32);
+    animal.joy = Math.min(100, animal.joy + 7);
+    state.actions.fed += 1;
+    say(`${info.emoji} Crunch! ${info.short} loved the ${info.food}.`);
+    tone(430, .08);
+  } else if (action === 'water') {
+    animal.water = Math.min(100, animal.water + 38);
+    animal.joy = Math.min(100, animal.joy + 5);
+    state.actions.watered += 1;
+    say(`${info.emoji} Splash! That was refreshing.`);
+    tone(610, .09);
+  } else {
+    animal.joy = Math.min(100, animal.joy + 28);
+    state.actions.played += 1;
+    state.leaves += 3;
+    say(`${info.emoji} ${info.short} chases the ball and brings back 3 leaves!`);
+    tone(700, .1);
+  }
+  updateUI();
+}
+
+function inviteVisitor() {
+  if (!state.animals.length) return notify('Place an animal before opening the gate.', true);
+  if (state.visitors.length >= 5) return notify('The path is full of excited guests!');
+  const animalTypes = state.animals.map((animal) => animal.type);
+  const request = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+  const serial = state.visitorSerial++;
+  state.visitors.push({ id: Date.now() + serial, request, face: VISITOR_FACES[serial % VISITOR_FACES.length], name: VISITOR_NAMES[serial % VISITOR_NAMES.length] });
+  say(`🎟️ ${VISITOR_NAMES[serial % VISITOR_NAMES.length]} wants to meet ${ANIMALS[request].short}!`);
+  tone(560, .08);
+  updateUI();
+}
+
+function completeVisit(id) {
+  const visitor = state.visitors.find((item) => item.id === id);
+  const animal = state.animals.find((item) => item.id === state.selectedId);
+  if (!animal) return notify(`Select ${ANIMALS[visitor.request].short}, then tap this guest.`, true);
+  if (animal.type !== visitor.request) {
+    notify(`${visitor.name} is looking for ${ANIMALS[visitor.request].short} ${ANIMALS[visitor.request].emoji}`, true);
+    return;
+  }
+  state.visitors = state.visitors.filter((item) => item.id !== id);
+  animal.joy = Math.min(100, animal.joy + 16);
+  state.actions.visits += 1;
+  state.leaves += 8;
+  say(`${visitor.face} ${visitor.name} played with ${ANIMALS[animal.type].short}! +8 🍃`);
+  tone(760, .11);
+  updateUI();
+}
+
+function getMood(animal) {
+  const average = (animal.food + animal.water + animal.joy) / 3;
+  return average > 82 ? '💚' : average > 55 ? '😊' : '💭';
+}
+
+function getNeedMessage(animal) {
+  if (animal.food < 70) return '“A little snack, please?”';
+  if (animal.water < 70) return '“Could I have some water?”';
+  return '“Let’s play!”';
+}
+
+function say(message) {
+  clearTimeout(speechTimer);
+  els.speech.textContent = message;
+  els.speech.hidden = false;
+  speechTimer = setTimeout(() => { els.speech.hidden = true; }, 3200);
+}
+
+function notify(message, error = false) {
+  clearTimeout(toastTimer);
+  els.toast.textContent = message;
+  els.toast.className = `toast show${error ? ' error' : ''}`;
+  toastTimer = setTimeout(() => { els.toast.className = 'toast'; }, 2500);
+}
+
+function tone(frequency, duration) {
+  if (!state.sound) return;
+  try {
+    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    gain.gain.setValueAtTime(.035, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, audioContext.currentTime + duration);
+    oscillator.connect(gain).connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (_) { /* Sound is optional. */ }
+}
+
+function resetGame(keepDay = false) {
+  state.leaves = 120;
+  state.stars = keepDay ? state.stars : 0;
+  state.day = keepDay ? state.day + 1 : 1;
+  state.selectedType = null;
+  state.selectedId = null;
+  state.animals = [];
+  state.visitors = [];
+  state.visitorSerial = 0;
+  state.actions = { placed: 0, fed: 0, watered: 0, played: 0, visits: 0 };
+  updateUI();
+}
+
+document.querySelectorAll('.care-btn').forEach((button) => button.addEventListener('click', () => careForSelected(button.dataset.care)));
+els.inviteBtn.addEventListener('click', inviteVisitor);
+els.soundBtn.addEventListener('click', () => { state.sound = !state.sound; els.soundBtn.textContent = state.sound ? '🔊' : '🔇'; });
+els.finishDayBtn.addEventListener('click', () => {
+  state.stars += 1;
+  els.daySummary.textContent = `${state.animals.length} animals cared for · ${state.actions.visits} happy guests · 1 new safari star!`;
+  updateUI();
+  els.dayDialog.showModal();
+});
+$('#nextDayBtn').addEventListener('click', () => { els.dayDialog.close(); resetGame(true); });
+$('#resetBtn').addEventListener('click', () => { resetGame(false); notify('A fresh savannah is ready!'); });
+$('#startBtn').addEventListener('click', () => els.welcomeDialog.close());
+$('#closeWelcome').addEventListener('click', () => els.welcomeDialog.close());
+
+updateUI();
+els.welcomeDialog.showModal();
+
+    </script>
+  </body>
+</html>

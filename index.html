@@ -1,204 +1,308 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Defend the Capybara Snack Palace with a crew of towers against cheetahs pouring through a wild portal." />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#7c4dff" />
-    <title>Capybara Snackdown — Tower Defense</title>
-    <link rel="icon" type="image/png" href="assets/branding/capybara-snackdown-logo.png" />
-    <link rel="apple-touch-icon" href="assets/branding/capybara-snackdown-logo.png" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="sky-confetti" aria-hidden="true"></div>
-    <main class="game-shell">
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand-mark">
-            <img class="brand-logo" src="assets/branding/capybara-snackdown-logo.png" alt="Capybara Snackdown logo" />
-          </span>
-          <div>
-            <p class="eyebrow">CAPY CREW VS CHEETAHS · V4 STORYBOOK</p>
-            <h1>Capybara Snackdown</h1>
-          </div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="description" content="Choose from five colorful, touch-friendly games in the Capycorn Arcade.">
+  <meta name="theme-color" content="#20133f">
+  <title>Capycorn Arcade — Pick a Game</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #fff7de;
+      --muted: #c8badc;
+      --panel: rgba(38, 24, 71, .84);
+      --line: rgba(255, 255, 255, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; min-height: 100%; background: #160c2d; }
+
+    body {
+      min-width: 320px; min-height: 100vh; min-height: 100svh; margin: 0;
+      color: var(--ink); overflow-x: hidden;
+      font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 13% 10%, #8e5cff55 0 2px, transparent 3px) 0 0 / 46px 46px,
+        radial-gradient(circle at 82% 13%, #ffd45c44 0 2px, transparent 3px) 18px 14px / 64px 64px,
+        radial-gradient(circle at 50% -10%, #6d48b8 0, #2d1955 37%, #160c2d 75%);
+    }
+
+    body::before, body::after {
+      content: ""; position: fixed; z-index: -1; width: 420px; height: 420px;
+      border-radius: 50%; filter: blur(80px); opacity: .22; pointer-events: none;
+    }
+
+    body::before { left: -180px; bottom: -210px; background: #ff804f; }
+    body::after { right: -180px; top: -190px; background: #5fd6b5; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px)); min-height: 100svh; margin: 0 auto;
+      display: flex; flex-direction: column; justify-content: center; padding: 24px 0 18px;
+    }
+
+    .hero {
+      display: flex; align-items: end; justify-content: space-between; gap: 22px;
+      margin-bottom: 20px; padding: 0 4px;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px; color: #ffd560; font-weight: 900; font-size: 12px;
+      letter-spacing: 2.4px; text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font-size: clamp(36px, 6vw, 65px); line-height: .92; letter-spacing: -2.5px; }
+
+    .hero p:last-child { max-width: 560px; margin: 10px 0 0; color: var(--muted); font-size: 16px; line-height: 1.45; }
+
+    .arcade-token {
+      flex: 0 0 auto; display: grid; place-items: center; width: 88px; height: 88px;
+      border: 3px solid #ffe183; border-radius: 28px; color: #3d2358;
+      background: linear-gradient(145deg, #fff1a5, #ffad45); box-shadow: 0 12px 28px #0f0823aa, inset 0 2px 0 #fff9;
+      font-size: 48px; transform: rotate(5deg);
+    }
+
+    .game-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    .game-card {
+      --accent: #ffd15c; --accent2: #ff7a55;
+      position: relative; min-height: 218px; overflow: hidden;
+      display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: center; gap: 10px;
+      padding: 23px 20px 21px 25px; color: var(--ink); text-decoration: none;
+      border: 2px solid var(--line); border-radius: 29px;
+      background: linear-gradient(135deg, var(--panel), rgba(24, 14, 48, .94));
+      box-shadow: 0 15px 35px #0c061c77, inset 0 1px 0 #fff1;
+      isolation: isolate; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .game-card::before {
+      content: ""; position: absolute; z-index: -1; inset: auto -80px -125px auto; width: 300px; height: 300px;
+      border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 48%, transparent), transparent 67%);
+    }
+
+    .game-card::after {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(110deg, transparent 20%, #fff0 44%, #fff1 50%, #fff0 56%);
+      transform: translateX(-110%); transition: transform .55s ease;
+    }
+
+    .game-card:hover, .game-card:focus-visible {
+      outline: none; transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 75%, white);
+      box-shadow: 0 20px 42px #09041699, 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+
+    .game-card:hover::after, .game-card:focus-visible::after { transform: translateX(110%); }
+
+    .capy { --accent: #ffbd3e; --accent2: #8c5cff; }
+    .savannah { --accent: #f2ce47; --accent2: #64b96d; }
+    .whisker { --accent: #ff8755; --accent2: #7f5cff; }
+    .coin-cat { --accent: #ffd166; --accent2: #df5a3a; }
+    .jumpy { --accent: #7fe3ff; --accent2: #ff9d5c; }
+
+    .game-card.wide { grid-column: 1 / -1; }
+
+    .card-copy { min-width: 0; position: relative; z-index: 2; }
+
+    .card-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 11px; }
+
+    .number {
+      width: 27px; height: 27px; display: grid; place-items: center; border-radius: 9px;
+      color: #2d193f; background: var(--accent); font-size: 13px; font-weight: 1000;
+      box-shadow: inset 0 -2px 0 #0002;
+    }
+
+    .genre {
+      padding: 6px 9px; border: 1px solid #fff2; border-radius: 99px; color: #efe5ff;
+      background: #fff1; font-size: 10px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase;
+    }
+
+    .game-card h2 { margin: 0; font-size: clamp(24px, 3vw, 33px); line-height: 1; letter-spacing: -.8px; }
+
+    .game-card p { min-height: 38px; margin: 9px 0 14px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .play {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-size: 13px;
+      font-weight: 1000; letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    .play span {
+      width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%;
+      color: #2c193c; background: var(--accent); transition: transform .2s ease;
+    }
+
+    .game-card:hover .play span, .game-card:focus-visible .play span { transform: translateX(4px); }
+
+    .card-art { position: relative; height: 175px; display: grid; place-items: center; pointer-events: none; }
+
+    .card-art::after {
+      content: ""; position: absolute; z-index: -1; left: 12%; right: 12%; bottom: 3px; height: 27px;
+      border-radius: 50%; background: #08031366; filter: blur(7px);
+    }
+
+    .capy-logo { width: 172px; height: 172px; object-fit: contain; filter: drop-shadow(0 10px 9px #08031377); }
+
+    .animal-scene { position: relative; width: 175px; height: 155px; }
+    .sun { position: absolute; top: 2px; right: 15px; font-size: 43px; filter: drop-shadow(0 0 16px #ffd85d99); }
+    .tree { position: absolute; left: 8px; bottom: 21px; font-size: 69px; }
+    .animals { position: absolute; right: 2px; bottom: 15px; font-size: 43px; letter-spacing: -13px; filter: drop-shadow(0 8px 5px #08031377); }
+    .grass { position: absolute; left: 0; right: 0; bottom: 4px; height: 33px; border-radius: 50%; background: #5ba857; transform: perspective(80px) rotateX(55deg); }
+
+    .sheet-sprite {
+      width: 180px; height: 170px; background-repeat: no-repeat;
+      filter: drop-shadow(0 11px 8px #08031388);
+    }
+
+    .whisker-sprite {
+      background-image: url("assets/whisker-rush-cat-sprite.png");
+      background-size: 360px 340px; background-position: 0 0;
+    }
+
+    .coin-cat-sprite {
+      width: 170px; height: 170px;
+      background-image: url("assets/coin-cat-sprites-v2.png");
+      background-size: 340px 510px; background-position: 0 0;
+    }
+
+    .coin-trail { position: absolute; inset: 0; }
+    .coin-trail i {
+      position: absolute; width: 18px; height: 18px; border: 3px solid #b67718; border-radius: 50%;
+      background: #ffd75a; box-shadow: inset -3px -3px 0 #e9a829, 0 3px 6px #08031377;
+    }
+    .coin-trail i:nth-child(1) { left: 5px; top: 9px; }
+    .coin-trail i:nth-child(2) { right: 5px; top: 35px; transform: scale(.8); }
+    .coin-trail i:nth-child(3) { right: 20px; bottom: 14px; transform: scale(.65); }
+
+    .race { --accent: #8ef1ff; --accent2: #ff8ad8; }
+    .race-art { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .race-capy { width: 92px; height: 92px; object-fit: contain; transform: rotate(-5deg); filter: drop-shadow(0 8px 6px #08031377); }
+    .race-vs { padding: 5px 8px; border-radius: 10px; color: #2d193f; background: var(--accent); font-size: 14px; font-weight: 1000; transform: rotate(-7deg); box-shadow: inset 0 -2px 0 #0002; }
+    .race-unicorn { font-size: 74px; line-height: 1; transform: scaleX(-1) rotate(4deg); filter: drop-shadow(0 8px 6px #08031377); }
+
+    .footer {
+      display: flex; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 0 6px;
+      color: #a99bbc; font-size: 11px; font-weight: 700;
+    }
+
+    kbd { padding: 2px 6px; border: 1px solid #fff2; border-radius: 5px; color: #e8dafc; background: #fff1; font: inherit; }
+
+    @media (max-width: 820px) {
+      .shell { justify-content: flex-start; }
+      .game-card { grid-template-columns: minmax(0, 1fr) 145px; }
+      .card-art { transform: scale(.86); }
+    }
+
+    @media (max-width: 660px) {
+      .shell { width: min(100% - 20px, 520px); padding-top: 18px; }
+      .hero { align-items: center; margin-bottom: 16px; }
+      .arcade-token { width: 66px; height: 66px; border-radius: 21px; font-size: 36px; }
+      .game-grid { grid-template-columns: 1fr; gap: 12px; }
+      .game-card { min-height: 184px; grid-template-columns: minmax(0, 1fr) 125px; padding: 18px 13px 18px 19px; border-radius: 23px; }
+      .card-art { height: 145px; transform: scale(.76); }
+      .game-card p { min-height: 0; }
+      .footer { flex-direction: column; text-align: center; align-items: center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Six worlds · one happy place</p>
+        <h1>Capycorn Arcade</h1>
+        <p>Pick an adventure and jump straight in. Every game works with touch, and most have keyboard controls too.</p>
+      </div>
+      <div class="arcade-token" aria-hidden="true">🕹️</div>
+    </header>
+
+    <section class="game-grid" aria-label="Choose a game">
+      <a class="game-card capy" href="capybara-snackdown.html" data-key="1">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">1</span><span class="genre">Tower defense</span></div>
+          <h2>Capybara Snackdown</h2>
+          <p>Build a capy crew, stop the cheetahs, and save every snack in the palace.</p>
+          <span class="play">Play game <span>▶</span></span>
         </div>
-        <div class="stats" aria-label="Game stats">
-          <div class="stat coin-stat"><span>🪙</span><strong id="coins">180</strong><small>coins</small></div>
-          <div class="stat"><span>❤️</span><strong id="lives">20</strong><small>lives</small></div>
-          <div class="stat"><span>🐾</span><strong id="wave">0</strong><small>wave</small></div>
+        <div class="card-art"><img class="capy-logo" src="assets/branding/capybara-snackdown-logo.png" alt=""></div>
+      </a>
+
+      <a class="game-card savannah" href="sunny-savannah.html" data-key="2">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">2</span><span class="genre">Habitat builder</span></div>
+          <h2>Sunny Savannah</h2>
+          <p>Welcome wild animals, build happy habitats, and delight your sanctuary visitors.</p>
+          <span class="play">Play game <span>▶</span></span>
         </div>
-        <div class="header-actions">
-          <button id="soundBtn" class="icon-btn" type="button" aria-label="Toggle sound" title="Toggle sound">🔊</button>
-          <button id="helpBtn" class="icon-btn" type="button" aria-label="How to play" title="How to play">?</button>
+        <div class="card-art animal-scene" aria-hidden="true">
+          <span class="sun">☀️</span><span class="tree">🌳</span><span class="grass"></span><span class="animals">🦁🦒</span>
         </div>
-      </header>
+      </a>
 
-      <section class="game-grid">
-        <aside class="tower-panel" aria-label="Capybara tower shop">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">CAPY CREW</p>
-              <h2>Choose your hero!</h2>
-            </div>
-            <span class="tiny-badge">Tap to build</span>
-          </div>
+      <a class="game-card whisker" href="whisker-rush.html" data-key="3">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">3</span><span class="genre">Infinite runner</span></div>
+          <h2>Whisker Rush</h2>
+          <p>Leap across rooftops, grab coins, and keep your paws moving as the city speeds up.</p>
+          <span class="play">Play game <span>▶</span></span>
+        </div>
+        <div class="card-art"><span class="sheet-sprite whisker-sprite" aria-hidden="true"></span></div>
+      </a>
 
-          <button class="tower-card" type="button" data-tower="slinger" aria-pressed="false">
-            <span class="tower-emoji"><img src="assets/capy-reference/berry-slinger.png" alt="" /></span>
-            <span class="tower-copy">
-              <strong>Orange Snacker</strong>
-              <small>Fast citrus lobber</small>
-              <span class="mini-stats"><i>💥 12</i><i>🎯 Far</i></span>
-            </span>
-            <span class="price">🪙 60</span>
-          </button>
+      <a class="game-card coin-cat" href="coin-cat-arena.html" data-key="4">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">4</span><span class="genre">Rooftop runner</span></div>
+          <h2>Coin Cat v2</h2>
+          <p>Run through changing skylines, chase huge scores, and claim a place on the leaderboard.</p>
+          <span class="play">Play game <span>▶</span></span>
+        </div>
+        <div class="card-art">
+          <span class="sheet-sprite coin-cat-sprite" aria-hidden="true"></span>
+          <span class="coin-trail" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+      </a>
 
-          <button class="tower-card" type="button" data-tower="melon" aria-pressed="false">
-            <span class="tower-emoji"><img src="assets/capy-reference/melon-mortar.png" alt="" /></span>
-            <span class="tower-copy">
-              <strong>Spring Soaker</strong>
-              <small>Splashy hot-spring water</small>
-              <span class="mini-stats"><i>💥 26</i><i>💦 Splash</i></span>
-            </span>
-            <span class="price">🪙 95</span>
-          </button>
+      <a class="game-card jumpy" href="capybara-jump.html" data-key="5">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">5</span><span class="genre">Jumping game</span></div>
+          <h2>Capybara Jump</h2>
+          <p>Race down city streets at sunset, hop the galloping cheetahs, and snatch every orange.</p>
+          <span class="play">Play game <span>▶</span></span>
+        </div>
+        <div class="card-art"><img class="capy-logo" src="assets/capy-reference/chill-capy.png" alt=""></div>
+      </a>
 
-          <button class="tower-card" type="button" data-tower="chill" aria-pressed="false">
-            <span class="tower-emoji"><img src="assets/capy-reference/chill-capy.png" alt="" /></span>
-            <span class="tower-copy">
-              <strong>Chill Capy</strong>
-              <small>Slows fast paws</small>
-              <span class="mini-stats"><i>❄️ 7</i><i>🐢 Slow</i></span>
-            </span>
-            <span class="price">🪙 80</span>
-          </button>
+      <a class="game-card race" href="capy-vs-unicorn.html" data-key="6">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">6</span><span class="genre">Racing</span></div>
+          <h2>Capy vs Unicorn</h2>
+          <p>Pick your champion, then tap as fast as you can to gallop past the finish line.</p>
+          <span class="play">Play game <span>▶</span></span>
+        </div>
+        <div class="card-art race-art" aria-hidden="true">
+          <img class="race-capy" src="assets/capy-reference/chill-capy.png" alt="">
+          <span class="race-vs">VS</span>
+          <span class="race-unicorn">🦄</span>
+        </div>
+      </a>
+    </section>
 
-          <button class="tower-card trap-card" type="button" data-tower="basket" aria-pressed="false">
-            <span class="tower-emoji">🧺</span>
-            <span class="tower-copy">
-              <strong>Basket Snare</strong>
-              <small>Reusable road trap</small>
-              <span class="mini-stats"><i>🛑 1.2s</i><i>✨ Wide</i></span>
-            </span>
-            <span class="price">🪙 45</span>
-          </button>
+    <footer class="footer">
+      <span>Tap a card to start · Use your browser’s Back button to return</span>
+      <span>Keyboard: <kbd>1</kbd>–<kbd>5</kbd> picks a game</span>
+    </footer>
+  </main>
 
-          <div class="tip-card">
-            <span>💡</span>
-            <p>Choose a defense, then tap once to build it. Placement mode turns off automatically.</p>
-          </div>
-        </aside>
-
-        <section class="board-wrap">
-          <div class="board-chrome">
-            <div class="route-label"><span>🐾</span> DUSTY DASH TRAIL</div>
-            <div id="bossAlert" class="boss-alert" hidden>👑 ALPHA CHEETAH</div>
-            <div class="board-controls">
-              <button id="topStartWaveBtn" class="top-start-wave" type="button">
-                <span>Start wave 1</span><b>▶</b>
-              </button>
-              <button id="pauseBtn" class="board-btn" type="button" aria-label="Pause game">⏸</button>
-              <button id="speedBtn" class="board-btn speed" type="button" aria-label="Change speed">1×</button>
-              <button id="autoStartBtn" class="auto-start-btn" type="button" aria-pressed="false">Auto off</button>
-            </div>
-          </div>
-          <div class="canvas-frame">
-            <canvas id="gameCanvas" width="1000" height="600" aria-label="Tower defense game board"></canvas>
-            <div id="toast" class="toast" role="status" aria-live="polite"></div>
-            <div id="countdown" class="countdown" hidden></div>
-
-            <div id="welcomeCard" class="welcome-card">
-              <button class="close-welcome" type="button" aria-label="Close instructions">×</button>
-              <span class="welcome-icon">🧺</span>
-              <div class="welcome-story" aria-hidden="true">
-                <img src="assets/landmarks/cheetah-portal.png" alt="" />
-                <span>🐆 ➜ 🍪</span>
-                <img src="assets/landmarks/snack-palace.png" alt="" />
-              </div>
-              <p class="eyebrow">DEFEND THE SNACK PALACE · V4</p>
-              <h2>Snack heroes, assemble!</h2>
-              <p>Mischievous cheetahs are zooming through the rainbow portal. Build your capy crew and save every yummy snack!</p>
-              <button id="letsGoBtn" class="primary-btn" type="button">Let’s defend! <span>→</span></button>
-            </div>
-
-            <div id="endCard" class="end-card" hidden>
-              <span id="endEmoji" class="end-emoji">🌧️</span>
-              <p class="eyebrow">PALACE REPORT</p>
-              <h2 id="endTitle">The snacks got pounced!</h2>
-              <p id="endText">You held out for 0 waves.</p>
-              <button id="restartBtn" class="primary-btn" type="button">Try again <span>↻</span></button>
-            </div>
-
-            <aside id="towerInspector" class="tower-inspector" aria-label="Selected tower controls" hidden>
-              <button id="closeInspectorBtn" class="inspector-close" type="button" aria-label="Close tower controls">×</button>
-              <div class="inspector-heading">
-                <span class="inspector-art">
-                  <img id="inspectorImage" src="assets/capy-reference/berry-slinger.png" alt="" />
-                  <span id="inspectorEmoji" hidden>🧺</span>
-                </span>
-                <div>
-                  <p id="inspectorLevel" class="eyebrow">LEVEL 1 / 3</p>
-                  <h3 id="inspectorName">Orange Snacker</h3>
-                </div>
-              </div>
-              <div class="inspector-stats">
-                <span><small id="inspectorDamageLabel">Damage</small><b id="inspectorDamage">12</b></span>
-                <span><small id="inspectorRangeLabel">Range</small><b id="inspectorRange">125</b></span>
-                <span><small id="inspectorSpeedLabel">Speed</small><b id="inspectorSpeed">Fast</b></span>
-              </div>
-              <div class="inspector-actions">
-                <button id="upgradeTowerBtn" class="upgrade-btn" type="button">Upgrade · 🪙 45</button>
-                <button id="sellTowerBtn" class="sell-btn" type="button">Sell · 🪙 39</button>
-              </div>
-            </aside>
-          </div>
-
-          <footer class="wavebar">
-            <div class="wave-copy">
-              <span id="waveIcon" class="wave-icon">🌱</span>
-              <div>
-                <p class="eyebrow" id="waveStatus">SAVANNA IS QUIET</p>
-                <strong id="waveDescription">Build your first line of defense</strong>
-              </div>
-            </div>
-            <div class="progress-shell" aria-label="Wave progress">
-              <div class="progress-track"><span id="waveProgress"></span></div>
-              <small id="enemyCount">0 cheetahs on trail</small>
-            </div>
-            <button id="startWaveBtn" class="start-wave" type="button">
-              <span>Start wave 1</span><b>▶</b>
-            </button>
-          </footer>
-        </section>
-      </section>
-
-      <footer class="page-footer">
-        <span>🏰 Every escaped cheetah steals from the Snack Palace.</span>
-        <span>Keyboard: <kbd>1</kbd>–<kbd>4</kbd> select • <kbd>Space</kbd> start/pause • <kbd>Esc</kbd> cancel</span>
-      </footer>
-    </main>
-
-    <dialog id="helpDialog" class="help-dialog">
-      <button id="closeHelpBtn" class="dialog-close" type="button" aria-label="Close">×</button>
-      <span class="dialog-emoji">🗺️</span>
-      <p class="eyebrow">FIELD GUIDE</p>
-      <h2>How to save the snacks</h2>
-      <ol>
-        <li><b>Choose a defense.</b> Build mode lasts for one placement. Click the active card again or press Esc to cancel.</li>
-        <li><b>Place it on grass.</b> Towers can’t block the dusty dash trail.</li>
-        <li><b>Start the wave.</b> Defeated cheetahs drop coins for more towers.</li>
-        <li><b>Watch the portal.</b> Every 5th wave tears it open for a powerful alpha cheetah.</li>
-        <li><b>Improve your crew.</b> Tap a placed capy to upgrade it through level 3 or sell it for a partial refund.</li>
-        <li><b>Reposition freely.</b> Drag a placed capy to another clear patch of grass. Invalid drops snap back.</li>
-        <li><b>Trap the trail.</b> Basket Snares go directly on the road, briefly stopping nearby cheetahs before recharging.</li>
-        <li><b>Keep it moving.</b> Turn on Auto to begin each new wave after a short countdown.</li>
-      </ol>
-      <button id="gotItBtn" class="primary-btn" type="button">Got it! ✨</button>
-    </dialog>
-
-    <script src="game.js"></script>
-  </body>
+  <script>
+    const games = [...document.querySelectorAll('[data-key]')];
+    addEventListener('keydown', event => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const game = games.find(card => card.dataset.key === event.key);
+      if (game) game.click();
+    });
+  </script>
+</body>
 </html>

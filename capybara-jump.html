@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="description" content="Help Chill Capy race down the city street, hop the charging cheetahs, and grab every orange in the sky.">
+  <meta name="theme-color" content="#2d1955">
+  <title>Capybara Jump — Capycorn Arcade</title>
+  <style>
+    html, body {
+      margin: 0; height: 100%; overflow: hidden; background: #160c2d;
+      font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+    }
+    canvas { display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .home {
+      position: fixed; top: 12px; left: 12px; z-index: 2; padding: 8px 14px;
+      color: #fff7de; text-decoration: none; font-size: 13px; font-weight: 900;
+      background: rgba(30, 17, 56, .75); border: 1px solid rgba(255,255,255,.18);
+      border-radius: 99px; backdrop-filter: blur(4px);
+    }
+    .home:hover { background: rgba(58, 36, 104, .9); }
+  </style>
+</head>
+<body>
+  <a class="home" href="index.html">← Arcade</a>
+  <canvas id="game"></canvas>
+
+  <script>
+  'use strict';
+
+  const W = 960, H = 540, GROUND = 452;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  const capyImg = new Image();
+  capyImg.src = 'assets/capy-reference/chill-capy.png';
+  const cheetahImg = new Image();
+  cheetahImg.src = 'assets/cheetahs/normal.png';
+
+  let scale = 1, offX = 0, offY = 0;
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    scale = Math.min(canvas.width / W, canvas.height / H);
+    offX = (canvas.width - W * scale) / 2;
+    offY = (canvas.height - H * scale) / 2;
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  let audio = null;
+  function unlockAudio() {
+    if (!audio) {
+      try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audio = null; }
+    }
+    if (audio && audio.state === 'suspended') audio.resume();
+  }
+  function beep(type, f1, f2, dur, vol) {
+    if (!audio) return;
+    const t = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f1, t);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, f2), t + dur);
+    gain.gain.setValueAtTime(vol || 0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(t);
+    osc.stop(t + dur);
+  }
+
+  const PLAYER_W = 104, PLAYER_H = 100, PLAYER_X = 150;
+  let state = 'title';
+  let player, obstacles, oranges, particles, popups, clouds;
+  let speed, distance, scoreF, score, orangeCount;
+  let spawnIn, orangeIn, shakeT, hintT, time, overT;
+  let best = +(localStorage.getItem('capyJumpBest') || 0);
+
+  function reset() {
+    player = { y: GROUND, vy: 0, grounded: true, squash: 0 };
+    obstacles = [];
+    oranges = [];
+    particles = [];
+    popups = [];
+    clouds = [80, 330, 600, 850].map((x, i) => ({ x, y: 55 + (i % 2) * 50, s: 0.75 + (i % 3) * 0.25 }));
+    speed = 6.2;
+    distance = 0;
+    scoreF = 0;
+    score = 0;
+    orangeCount = 0;
+    spawnIn = 520;
+    orangeIn = 380;
+    shakeT = 0;
+    hintT = 260;
+    overT = 0;
+    time = 0;
+  }
+  reset();
+
+  let holding = false;
+  function press() {
+    unlockAudio();
+    if (state === 'title') {
+      state = 'play';
+      reset();
+      beep('triangle', 320, 640, 0.15, 0.1);
+      return;
+    }
+    if (state === 'over') {
+      if (overT > 40) {
+        state = 'play';
+        reset();
+        beep('triangle', 320, 640, 0.15, 0.1);
+      }
+      return;
+    }
+    if (player.grounded) {
+      player.vy = -15.5;
+      player.grounded = false;
+      beep('square', 300, 540, 0.12, 0.07);
+    }
+  }
+  function release() { holding = false; }
+
+  addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+      e.preventDefault();
+      if (!e.repeat) { holding = true; press(); }
+    }
+  });
+  addEventListener('keyup', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') release();
+  });
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); holding = true; press(); });
+  addEventListener('pointerup', release);
+  addEventListener('pointercancel', release);
+
+  function spawnCheetah(extraGap) {
+    obstacles.push({ x: W + 80 + (extraGap || 0), w: 108, h: 82, phase: Math.random() * 6.28, dustIn: 4 });
+  }
+
+  function puffDust(x, y, n, color) {
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: -Math.random() * 3 - 0.5,
+        life: 22 + Math.random() * 14,
+        maxLife: 36,
+        size: 4 + Math.random() * 6,
+        color: color || 'rgba(233,214,178,.8)'
+      });
+    }
+  }
+
+  function update(dt) {
+    time += dt;
+    for (const c of clouds) {
+      c.x -= speed * 0.22 * dt;
+      if (c.x < -170) { c.x = W + 150; c.y = 40 + Math.random() * 95; }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.12 * dt;
+      p.life -= dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const p = popups[i];
+      p.y -= 1.1 * dt;
+      p.life -= dt;
+      if (p.life <= 0) popups.splice(i, 1);
+    }
+    if (shakeT > 0) shakeT -= dt;
+    if (state === 'over') { overT += dt; return; }
+    if (state !== 'play') return;
+
+    speed = Math.min(13.5, speed + 0.0016 * dt);
+    distance += speed * dt;
+    scoreF += speed * dt * 0.06;
+    score = Math.floor(scoreF);
+    if (hintT > 0) hintT -= dt;
+
+    const g = (holding && player.vy < 0) ? 0.5 : 0.9;
+    player.vy += g * dt;
+    player.y += player.vy * dt;
+    if (player.y >= GROUND) {
+      if (!player.grounded) {
+        player.squash = 7;
+        puffDust(PLAYER_X + PLAYER_W / 2, GROUND + 4, 6, 'rgba(205,205,218,.6)');
+      }
+      player.y = GROUND;
+      player.vy = 0;
+      player.grounded = true;
+    }
+    if (player.squash > 0) player.squash -= dt;
+
+    spawnIn -= speed * dt;
+    if (spawnIn <= 0) {
+      spawnCheetah();
+      if (speed > 9 && Math.random() < 0.3) spawnCheetah(120);
+      spawnIn = 430 + Math.random() * 380;
+    }
+
+    orangeIn -= speed * dt;
+    if (orangeIn <= 0) {
+      oranges.push({ x: W + 60, y: GROUND - 150 - Math.random() * 85, phase: Math.random() * 6.28 });
+      orangeIn = 330 + Math.random() * 330;
+    }
+
+    const pBox = {
+      x: PLAYER_X + 26,
+      y: player.y - PLAYER_H + 20,
+      w: PLAYER_W - 50,
+      h: PLAYER_H - 28
+    };
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const o = obstacles[i];
+      o.x -= speed * dt;
+      if (o.x + o.w < -40) { obstacles.splice(i, 1); continue; }
+      o.dustIn -= dt;
+      if (o.dustIn <= 0 && o.x < W + 30) {
+        puffDust(o.x + 16, GROUND + 4, 1, 'rgba(205,205,218,.5)');
+        o.dustIn = 10 + Math.random() * 6;
+      }
+      const oBox = { x: o.x + 20, y: GROUND - o.h + 16, w: o.w - 38, h: o.h - 22 };
+      if (pBox.x < oBox.x + oBox.w && pBox.x + pBox.w > oBox.x &&
+          pBox.y < oBox.y + oBox.h && pBox.y + pBox.h > oBox.y) {
+        state = 'over';
+        overT = 0;
+        shakeT = 16;
+        if (score > best) {
+          best = score;
+          localStorage.setItem('capyJumpBest', String(best));
+        }
+        beep('sawtooth', 170, 55, 0.35, 0.14);
+        puffDust(PLAYER_X + PLAYER_W / 2, player.y - 40, 14, 'rgba(255,150,90,.85)');
+        return;
+      }
+    }
+
+    const pcx = PLAYER_X + PLAYER_W / 2, pcy = player.y - PLAYER_H / 2;
+    for (let i = oranges.length - 1; i >= 0; i--) {
+      const o = oranges[i];
+      o.x -= speed * dt;
+      if (o.x < -50) { oranges.splice(i, 1); continue; }
+      const oy = o.y + Math.sin(time * 0.08 + o.phase) * 7;
+      const dx = pcx - o.x, dy = pcy - oy;
+      if (dx * dx + dy * dy < 68 * 68) {
+        oranges.splice(i, 1);
+        scoreF += 5;
+        orangeCount += 1;
+        popups.push({ x: o.x, y: oy - 20, text: '+5', life: 46 });
+        puffDust(o.x, oy, 8, 'rgba(255,190,80,.9)');
+        beep('sine', 880, 1420, 0.13, 0.1);
+      }
+    }
+  }
+
+  function bigText(text, x, y, size, color, align) {
+    ctx.font = '900 ' + size + 'px ui-rounded, "Trebuchet MS", system-ui, sans-serif';
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = Math.max(2, size / 7);
+    ctx.strokeStyle = 'rgba(43,22,74,.85)';
+    ctx.lineJoin = 'round';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = color || '#fff7de';
+    ctx.fillText(text, x, y);
+  }
+
+  function drawCloud(x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = 'rgba(255,241,222,.9)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 24, 0, 7);
+    ctx.arc(28, -11, 29, 0, 7);
+    ctx.arc(58, 0, 22, 0, 7);
+    ctx.arc(28, 8, 30, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function seededRand(seed) {
+    let s = seed;
+    return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  }
+
+  function makeSkyline(minW, maxW, minH, maxH, gap, seed) {
+    const rand = seededRand(seed);
+    const list = [];
+    let x = 0;
+    while (x < W + 500) {
+      const w = minW + rand() * (maxW - minW);
+      const h = minH + rand() * (maxH - minH);
+      list.push({ x, w, h, seed: Math.floor(rand() * 900) + 3 });
+      x += w + gap + rand() * gap;
+    }
+    return { list, span: x };
+  }
+
+  const farSkyline = makeSkyline(70, 130, 100, 210, 16, 7);
+  const nearSkyline = makeSkyline(60, 110, 55, 140, 20, 42);
+
+  function drawSkyline(skyline, off, baseY, color, windows) {
+    const span = skyline.span;
+    for (const b of skyline.list) {
+      let sx = (b.x - off) % span;
+      if (sx < 0) sx += span;
+      for (let k = -1; k <= 0; k++) {
+        const px = sx + k * span;
+        if (px > W || px + b.w < 0) continue;
+        ctx.fillStyle = color;
+        ctx.fillRect(px, baseY - b.h, b.w, b.h + 4);
+        if (windows) {
+          ctx.fillStyle = 'rgba(255,209,102,.7)';
+          let row = 0;
+          for (let wy = baseY - b.h + 12; wy < baseY - 16; wy += 20, row++) {
+            let col = 0;
+            for (let wx = px + 9; wx < px + b.w - 12; wx += 17, col++) {
+              if ((b.seed + row * 13 + col * 7) % 5 < 2) ctx.fillRect(wx, wy, 7, 9);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function drawSky() {
+    const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
+    sky.addColorStop(0, '#33255f');
+    sky.addColorStop(0.55, '#8f4f86');
+    sky.addColorStop(1, '#ff9d5c');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, GROUND + 2);
+
+    const glow = ctx.createRadialGradient(770, 105, 8, 770, 105, 130);
+    glow.addColorStop(0, 'rgba(255,224,140,.95)');
+    glow.addColorStop(0.35, 'rgba(255,190,110,.5)');
+    glow.addColorStop(1, 'rgba(255,180,100,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(620, -40, 340, 300);
+    ctx.fillStyle = '#ffe6a3';
+    ctx.beginPath();
+    ctx.arc(770, 105, 42, 0, 7);
+    ctx.fill();
+
+    for (const c of clouds) drawCloud(c.x, c.y, c.s);
+
+    drawSkyline(farSkyline, distance * 0.22, GROUND + 4, '#4a3374', false);
+    drawSkyline(nearSkyline, distance * 0.5, GROUND + 4, '#37254f', true);
+  }
+
+  function drawStreet() {
+    const gr = ctx.createLinearGradient(0, GROUND, 0, H);
+    gr.addColorStop(0, '#484e5b');
+    gr.addColorStop(1, '#262a33');
+    ctx.fillStyle = gr;
+    ctx.fillRect(0, GROUND, W, H - GROUND);
+
+    ctx.fillStyle = '#9aa1ad';
+    ctx.fillRect(0, GROUND, W, 5);
+    ctx.fillStyle = '#6d7480';
+    ctx.fillRect(0, GROUND + 5, W, 5);
+
+    const shift = distance % 132;
+    ctx.fillStyle = '#ffd166';
+    for (let x = -70; x < W + 80; x += 132) {
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x - shift, GROUND + 48, 56, 8, 4);
+      else ctx.rect(x - shift, GROUND + 48, 56, 8);
+      ctx.fill();
+    }
+  }
+
+  function drawPlayer() {
+    const airK = Math.max(0, Math.min(1, (GROUND - player.y) / 300));
+    ctx.save();
+    ctx.globalAlpha = 0.3 * (1 - airK * 0.55);
+    ctx.fillStyle = '#1d1136';
+    ctx.beginPath();
+    ctx.ellipse(PLAYER_X + PLAYER_W / 2, GROUND + 14, 50 * (1 - airK * 0.4), 9 * (1 - airK * 0.4), 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+
+    const tilt = player.grounded ? 0 : Math.max(-0.28, Math.min(0.32, player.vy * 0.017));
+    let sx = 1, sy = 1;
+    if (player.squash > 0) {
+      const k = player.squash / 7;
+      sx = 1 + 0.15 * k;
+      sy = 1 - 0.15 * k;
+    }
+    ctx.save();
+    ctx.translate(PLAYER_X + PLAYER_W / 2, player.y);
+    ctx.rotate(tilt);
+    ctx.scale(-sx, sy);
+    if (capyImg.complete && capyImg.naturalWidth) {
+      ctx.drawImage(capyImg, -PLAYER_W / 2, -PLAYER_H, PLAYER_W, PLAYER_H);
+    } else {
+      ctx.fillStyle = '#b08053';
+      ctx.beginPath();
+      ctx.ellipse(0, -PLAYER_H / 2, PLAYER_W / 2, PLAYER_H / 2, 0, 0, 7);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawObstacle(o) {
+    const gallop = time * 0.32 + (o.phase || 0);
+    const bob = Math.abs(Math.sin(gallop)) * 9;
+    const rock = Math.sin(gallop) * 0.07;
+
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#141020';
+    ctx.beginPath();
+    ctx.ellipse(o.x + o.w / 2, GROUND + 14, o.w * 0.42 * (1 - bob * 0.02), 8, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(o.x + o.w / 2, GROUND - bob);
+    ctx.rotate(rock);
+    ctx.scale(-1, 1);
+    if (cheetahImg.complete && cheetahImg.naturalWidth) {
+      ctx.drawImage(cheetahImg, -o.w / 2, -o.h, o.w, o.h);
+    } else {
+      ctx.fillStyle = '#e8a33d';
+      ctx.beginPath();
+      ctx.ellipse(0, -o.h / 2, o.w / 2, o.h / 2, 0, 0, 7);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawOrangeIcon(x, y, r) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = '#f5862d';
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, 7);
+    ctx.fill();
+    ctx.fillStyle = '#ffab4a';
+    ctx.beginPath();
+    ctx.arc(-r * 0.25, -r * 0.28, r * 0.62, 0, 7);
+    ctx.fill();
+    ctx.strokeStyle = '#c25f14';
+    ctx.lineWidth = Math.max(1.5, r * 0.14);
+    ctx.beginPath();
+    ctx.arc(0, 0, r - ctx.lineWidth / 2, 0, 7);
+    ctx.stroke();
+    ctx.fillStyle = '#7a4a21';
+    ctx.fillRect(-r * 0.09, -r * 1.2, r * 0.18, r * 0.34);
+    ctx.fillStyle = '#4f9e4d';
+    ctx.beginPath();
+    ctx.ellipse(r * 0.3, -r * 0.95, r * 0.44, r * 0.2, -0.5, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawOrange(o) {
+    const oy = o.y + Math.sin(time * 0.08 + o.phase) * 7;
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(o.x, oy, 30, 0, 7);
+    ctx.fill();
+    ctx.restore();
+    drawOrangeIcon(o.x, oy, 17);
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, 7);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPopups() {
+    for (const p of popups) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 30));
+      bigText(p.text, p.x, p.y, 26, '#ffd560', 'center');
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function panel(cx, cy, w, h) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(28,16,54,.88)';
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx - w / 2, cy - h / 2, w, h, 24);
+    else ctx.rect(cx - w / 2, cy - h / 2, w, h);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawTitle() {
+    panel(W / 2, 190, 640, 260);
+    bigText('CAPYBARA JUMP', W / 2, 115, 58, '#ffd560', 'center');
+    bigText('Help Chill Capy hop over the cheetahs!', W / 2, 180, 26, '#fff7de', 'center');
+    const label = 'Grab oranges for +5 points';
+    ctx.font = '900 22px ui-rounded, "Trebuchet MS", system-ui, sans-serif';
+    const labelW = ctx.measureText(label).width;
+    bigText(label, W / 2 - 10, 222, 22, '#ffbd7a', 'center');
+    drawOrangeIcon(W / 2 - 10 + labelW / 2 + 18, 222, 13);
+    const pulse = 1 + Math.sin(time * 0.08) * 0.06;
+    ctx.save();
+    ctx.translate(W / 2, 285);
+    ctx.scale(pulse, pulse);
+    bigText('Press SPACE or TAP to jump', 0, 0, 28, '#8ef0c8', 'center');
+    ctx.restore();
+    if (best > 0) bigText('Best score: ' + best, W / 2, 340, 20, '#c8badc', 'center');
+  }
+
+  function drawGameOver() {
+    panel(W / 2, 200, 560, 270);
+    bigText('BONK!', W / 2, 115, 54, '#ff8755', 'center');
+    bigText('The cheetahs caught Chill Capy', W / 2, 168, 22, '#fff7de', 'center');
+    bigText('Score: ' + score, W / 2, 222, 34, '#ffd560', 'center');
+    bigText('Best: ' + best + (score >= best && score > 0 ? '  ★ New best!' : ''), W / 2, 262, 20, '#c8badc', 'center');
+    if (overT > 40) {
+      const pulse = 1 + Math.sin(time * 0.08) * 0.06;
+      ctx.save();
+      ctx.translate(W / 2, 312);
+      ctx.scale(pulse, pulse);
+      bigText('Tap or press SPACE to play again', 0, 0, 22, '#8ef0c8', 'center');
+      ctx.restore();
+    }
+  }
+
+  function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#160c2d';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let shakeX = 0, shakeY = 0;
+    if (shakeT > 0) {
+      shakeX = (Math.random() - 0.5) * shakeT * 1.2;
+      shakeY = (Math.random() - 0.5) * shakeT;
+    }
+    ctx.setTransform(scale, 0, 0, scale, offX + shakeX * scale, offY + shakeY * scale);
+
+    drawSky();
+    drawStreet();
+
+    for (const o of oranges) drawOrange(o);
+    for (const o of obstacles) drawObstacle(o);
+
+    if (state === 'title') {
+      const bob = Math.abs(Math.sin(time * 0.055)) * 26;
+      const savedY = player.y;
+      player.y = GROUND - bob;
+      drawPlayer();
+      player.y = savedY;
+      drawObstacle({ x: 690, w: 108, h: 82 });
+    } else {
+      drawPlayer();
+    }
+
+    drawParticles();
+    drawPopups();
+
+    if (state === 'play') {
+      bigText('' + score, 26, 42, 40, '#fff7de', 'left');
+      if (orangeCount > 0) {
+        drawOrangeIcon(40, 86, 14);
+        bigText('× ' + orangeCount, 62, 88, 24, '#ffbd7a', 'left');
+      }
+      bigText('Best ' + Math.max(best, score), W - 26, 42, 24, '#e9d8ff', 'right');
+      if (hintT > 0) {
+        ctx.globalAlpha = Math.min(1, hintT / 60);
+        bigText('HOLD to float higher!', W / 2, 120, 26, '#8ef0c8', 'center');
+        ctx.globalAlpha = 1;
+      }
+    } else if (state === 'title') {
+      drawTitle();
+    } else {
+      drawGameOver();
+    }
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(3, (now - last) / 16.667);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

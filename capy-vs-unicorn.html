@@ -74,6 +74,11 @@
     [392, 370, 349, 330].forEach((f, i) => beep('sawtooth', f, f * 0.94, 0.22, 0.07, i * 0.2));
   }
 
+  // ---------- sprites ----------
+  const capySprite = new Image();
+  capySprite.src = 'assets/capy-driver-sprite.png';
+  const capySpriteReady = () => capySprite.complete && capySprite.naturalWidth > 0;
+
   // ---------- race constants ----------
   const RACE_LENGTH = 1500;
   const PX = 0.85;                 // screen px per world unit
@@ -734,6 +739,26 @@
     ctx.fillStyle = '#7a5230';
     ctx.beginPath(); ctx.roundRect(-64, -26, 14, 8, 4); ctx.fill();
 
+    // seat back (behind driver)
+    ctx.fillStyle = '#b25f18';
+    ctx.beginPath(); ctx.roundRect(-40, -62, 30, 16, 6); ctx.fill();
+
+    // green leaf roll bar (behind driver)
+    ctx.strokeStyle = '#4e9e4e';
+    ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(-10, -52, 18, Math.PI, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#4e9e4e';
+    ctx.beginPath(); ctx.ellipse(-12, -72, 9, 5, -0.5, 0, 7); ctx.fill();
+
+    // capy driver sprite, lower body hidden by the buggy
+    if (capySpriteReady()) {
+      ctx.save();
+      ctx.translate(0, bounce * 0.35);
+      const dw = 88, dh = dw * capySprite.naturalHeight / capySprite.naturalWidth;
+      ctx.drawImage(capySprite, -50, -22 - dh, dw, dh);
+      ctx.restore();
+    }
+
     // pumpkin-buggy body
     ctx.fillStyle = '#ff9a3d';
     ctx.beginPath(); ctx.roundRect(-56, -52, 112, 40, 18); ctx.fill();
@@ -749,13 +774,6 @@
     // cream lower band
     ctx.fillStyle = '#ffe9c9';
     ctx.beginPath(); ctx.roundRect(-56, -26, 112, 14, 7); ctx.fill();
-    // green leaf roll bar
-    ctx.strokeStyle = '#4e9e4e';
-    ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.arc(-10, -52, 18, Math.PI, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#4e9e4e';
-    ctx.beginPath(); ctx.ellipse(-12, -72, 9, 5, -0.5, 0, 7); ctx.fill();
-
     // headlight + friendly bumper smile
     ctx.fillStyle = '#fff3b0';
     ctx.beginPath(); ctx.arc(52, -36, 6, 0, 7); ctx.fill();
@@ -763,44 +781,39 @@
     ctx.lineWidth = 2.4;
     ctx.beginPath(); ctx.arc(38, -24, 7, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
 
-    // seat + steering
-    ctx.fillStyle = '#b25f18';
-    ctx.beginPath(); ctx.roundRect(-22, -60, 30, 12, 6); ctx.fill();
+    // steering wheel in front of the driver
     ctx.strokeStyle = '#2b1e3a';
     ctx.lineWidth = 3.4;
-    ctx.beginPath(); ctx.arc(16, -56, 9, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    ctx.beginPath(); ctx.arc(38, -54, 9, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
 
-    // capy driver
-    ctx.save();
-    ctx.translate(-4, -70 + bounce * 0.4);
-    // scarf flowing
-    const sw = Math.sin(time * 10) * 3;
-    ctx.fillStyle = '#ff5d5d';
-    ctx.beginPath();
-    ctx.moveTo(-8, 6);
-    ctx.lineTo(-30, 2 + sw);
-    ctx.lineTo(-28, 12 + sw);
-    ctx.closePath(); ctx.fill();
-    // head
-    ctx.fillStyle = '#9a6b3f';
-    ctx.beginPath(); ctx.roundRect(-14, -14, 34, 26, 10); ctx.fill();
-    // snout
-    ctx.fillStyle = '#8a5c34';
-    ctx.beginPath(); ctx.roundRect(10, -4, 14, 12, 6); ctx.fill();
-    ctx.fillStyle = '#4a2f1a';
-    ctx.beginPath(); ctx.arc(20, 0, 2.2, 0, 7); ctx.fill();
-    // ear
-    ctx.fillStyle = '#8a5c34';
-    ctx.beginPath(); ctx.arc(-6, -14, 5, 0, 7); ctx.fill();
-    // goggles
-    ctx.fillStyle = '#fff3d6';
-    ctx.beginPath(); ctx.arc(4, -6, 5.6, 0, 7); ctx.fill();
-    ctx.strokeStyle = '#7a5230';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#2d1a0e';
-    ctx.beginPath(); ctx.arc(5.4, -6, 2.6, 0, 7); ctx.fill();
-    ctx.restore();
+    // vector driver fallback while the sprite loads
+    if (!capySpriteReady()) {
+      ctx.save();
+      ctx.translate(-4, -70 + bounce * 0.4);
+      const sw = Math.sin(time * 10) * 3;
+      ctx.fillStyle = '#ff5d5d';
+      ctx.beginPath();
+      ctx.moveTo(-8, 6);
+      ctx.lineTo(-30, 2 + sw);
+      ctx.lineTo(-28, 12 + sw);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#9a6b3f';
+      ctx.beginPath(); ctx.roundRect(-14, -14, 34, 26, 10); ctx.fill();
+      ctx.fillStyle = '#8a5c34';
+      ctx.beginPath(); ctx.roundRect(10, -4, 14, 12, 6); ctx.fill();
+      ctx.fillStyle = '#4a2f1a';
+      ctx.beginPath(); ctx.arc(20, 0, 2.2, 0, 7); ctx.fill();
+      ctx.fillStyle = '#8a5c34';
+      ctx.beginPath(); ctx.arc(-6, -14, 5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff3d6';
+      ctx.beginPath(); ctx.arc(4, -6, 5.6, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#7a5230';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#2d1a0e';
+      ctx.beginPath(); ctx.arc(5.4, -6, 2.6, 0, 7); ctx.fill();
+      ctx.restore();
+    }
 
     ctx.restore();
   }

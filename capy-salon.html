@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#3a1d54">
+<title>Capy Salon — Capycorn Arcade</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; touch-action: none;
+    font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+    background: radial-gradient(circle at 50% -20%, #6d48b8 0, #2d1955 45%, #160c2d 100%);
+    color: #fff7de; user-select: none; -webkit-user-select: none;
+  }
+  .wrap { display: flex; flex-direction: column; height: 100svh; max-width: 1080px; margin: 0 auto; padding: 8px 10px 10px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 4px 8px; }
+  .back {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px;
+    color: #2d193f; font-weight: 1000; font-size: 13px; text-decoration: none; letter-spacing: .5px;
+    background: linear-gradient(145deg, #8ef1ff, #5fd6b5); border-radius: 99px;
+    box-shadow: 0 6px 14px #0f082388, inset 0 2px 0 #fff9;
+  }
+  h1 { margin: 0; font-size: clamp(20px, 4.5vw, 30px); letter-spacing: -1px; }
+  h1 small { color: #ffd560; font-size: .55em; letter-spacing: 2px; text-transform: uppercase; display: block; }
+  .mute {
+    width: 42px; height: 42px; border: 2px solid #fff3; border-radius: 50%;
+    background: #fff2; color: inherit; font-size: 19px; cursor: pointer;
+  }
+  .stage-holder { position: relative; flex: 1; min-height: 0; }
+  svg.stage {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    border-radius: 26px; box-shadow: 0 18px 40px #09041688;
+  }
+  .tuft { transition: fill .4s ease; cursor: pointer; }
+  .paint-cursor .tuft { cursor: crosshair; }
+
+  .bubblewrap { position: absolute; right: 2%; top: 4%; max-width: 46%; pointer-events: none; }
+  .speech {
+    position: relative; padding: 12px 16px; border-radius: 18px;
+    color: #3a2150; background: #fffdf6; font-size: clamp(13px, 2.2vw, 17px); font-weight: 900; line-height: 1.35;
+    box-shadow: 0 10px 24px #09041655; transform-origin: 80% 100%;
+    animation: bubblein .35s ease;
+  }
+  .speech::after {
+    content: ""; position: absolute; bottom: -12px; right: 24%;
+    border: 8px solid transparent; border-top: 14px solid #fffdf6;
+  }
+  @keyframes bubblein { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .rinse-btn {
+    position: absolute; left: 50%; top: 8%; transform: translateX(-50%);
+    padding: 14px 26px; border: 3px solid #fff; border-radius: 99px;
+    color: #123c58; background: linear-gradient(145deg, #baf3ff, #5ec8f5);
+    font: inherit; font-size: clamp(16px, 3vw, 22px); font-weight: 1000; cursor: pointer;
+    box-shadow: 0 12px 26px #09041688, inset 0 2px 0 #fff9;
+    animation: wiggle 1s ease infinite;
+  }
+  @keyframes wiggle { 0%,100% { transform: translateX(-50%) rotate(-2deg); } 50% { transform: translateX(-50%) rotate(2deg) scale(1.05); } }
+
+  .palette {
+    display: none; flex-wrap: wrap; justify-content: center; gap: 9px; padding: 10px 6px 2px;
+  }
+  .palette.show { display: flex; }
+  .swatch {
+    width: clamp(40px, 7vw, 52px); height: clamp(40px, 7vw, 52px);
+    border: 3px solid #fff5; border-radius: 50%; cursor: pointer; padding: 0;
+    box-shadow: 0 5px 12px #09041666, inset 0 2px 0 #fff6;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .swatch.sel { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 4px #ffd56077, 0 5px 12px #09041666; }
+  .swatch.rainbow { background: conic-gradient(#ff6fa5, #ffd94a, #7ed67e, #5ec8f5, #8f7bff, #c470e8, #ff6fa5); }
+
+  .toolbar { display: flex; justify-content: center; gap: clamp(6px, 1.6vw, 14px); padding-top: 10px; }
+  .tool {
+    flex: 0 1 132px; min-width: 0; padding: 10px 6px 9px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: #fff7de; font: inherit; font-size: clamp(10px, 1.9vw, 13px); font-weight: 1000; letter-spacing: .5px;
+    background: linear-gradient(160deg, #3b2566, #2a1749); border: 2px solid #fff2; border-radius: 20px;
+    box-shadow: 0 8px 18px #09041677, inset 0 1px 0 #fff2;
+    transition: transform .15s ease, border-color .15s ease, background .2s ease;
+  }
+  .tool span.ico { font-size: clamp(24px, 4.6vw, 34px); line-height: 1.1; filter: drop-shadow(0 3px 3px #0006); }
+  .tool.active { border-color: #ffd560; background: linear-gradient(160deg, #6d48b8, #4b2b86); transform: translateY(-4px); box-shadow: 0 12px 22px #090416aa, 0 0 0 4px #ffd56044; }
+  .tool:active { transform: scale(.94); }
+
+  .flash { position: absolute; inset: 0; z-index: 8; background: #fff; opacity: 0; pointer-events: none; border-radius: 26px; }
+  .flash.go { animation: flashy .5s ease; }
+  @keyframes flashy { 0% { opacity: 0; } 25% { opacity: .95; } 100% { opacity: 0; } }
+
+  .confetti { position: absolute; top: -18px; z-index: 7; font-size: 22px; pointer-events: none; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(115vh) rotate(720deg); } }
+
+  @keyframes twinkle { 0%,100% { opacity: .35; transform: scale(.7) rotate(0deg); } 50% { opacity: 1; transform: scale(1.25) rotate(20deg); } }
+  @keyframes boing { 0% { transform: scale(1); } 35% { transform: scale(1.18, .85); } 65% { transform: scale(.9, 1.14); } 100% { transform: scale(1); } }
+  @keyframes foamy { 0% { transform: scale(.3); opacity: 0; } 60% { opacity: .95; } 100% { transform: scale(1); opacity: .9; } }
+  @keyframes droplet { to { transform: translateY(330px); opacity: 0; } }
+  @media (max-width: 640px) { .bubblewrap { max-width: 60%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">◀ Arcade</a>
+    <h1><small>Capycorn Arcade</small>Capy Salon 💇✨</h1>
+    <button class="mute" id="muteBtn" aria-label="Sound on or off">🔊</button>
+  </header>
+
+  <div class="stage-holder" id="holder">
+    <svg class="stage" id="stage" viewBox="0 0 960 640" preserveAspectRatio="xMidYMid slice" aria-label="Salon scene">
+      <defs>
+        <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffeef8"/><stop offset=".72" stop-color="#ffd9ee"/><stop offset=".72" stop-color="#e5c2ef"/><stop offset="1" stop-color="#d3a9e6"/>
+        </linearGradient>
+        <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#ff6fa5"/><stop offset=".25" stop-color="#ffd94a"/><stop offset=".5" stop-color="#7ed67e"/><stop offset=".75" stop-color="#5ec8f5"/><stop offset="1" stop-color="#c470e8"/>
+        </linearGradient>
+        <linearGradient id="horn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffe89a"/><stop offset="1" stop-color="#f7b733"/>
+        </linearGradient>
+        <radialGradient id="mirror" cx=".5" cy=".4" r=".75">
+          <stop offset="0" stop-color="#eafcff"/><stop offset="1" stop-color="#b7dff2"/>
+        </radialGradient>
+      </defs>
+
+      <!-- salon background -->
+      <rect width="960" height="640" fill="url(#wall)"/>
+      <g opacity=".9">
+        <circle cx="120" cy="52" r="16" fill="#ffd560"/><circle cx="280" cy="42" r="12" fill="#ff9dc6"/>
+        <circle cx="480" cy="52" r="16" fill="#8ef1ff"/><circle cx="680" cy="42" r="12" fill="#ffd560"/>
+        <circle cx="840" cy="52" r="16" fill="#ff9dc6"/>
+      </g>
+      <ellipse cx="430" cy="220" rx="200" ry="185" fill="url(#mirror)" stroke="#f1a3cd" stroke-width="14" opacity=".55"/>
+      <!-- shelf with potions -->
+      <g>
+        <rect x="30" y="300" width="150" height="12" rx="6" fill="#c98bd8"/>
+        <rect x="48" y="252" width="24" height="48" rx="9" fill="#ff8fbe"/>
+        <rect x="82" y="242" width="22" height="58" rx="9" fill="#8ef1ff"/>
+        <rect x="114" y="258" width="24" height="42" rx="9" fill="#ffd560"/>
+        <rect x="30" y="420" width="150" height="12" rx="6" fill="#c98bd8"/>
+        <rect x="52" y="374" width="26" height="46" rx="10" fill="#b58cff"/>
+        <rect x="92" y="366" width="22" height="54" rx="9" fill="#7ed67e"/>
+        <rect x="128" y="380" width="22" height="40" rx="9" fill="#ff9d5c"/>
+      </g>
+
+      <!-- salon chair -->
+      <g>
+        <rect x="360" y="562" width="140" height="16" rx="8" fill="#8a4bb0"/>
+        <rect x="418" y="512" width="24" height="58" rx="8" fill="#9c5cc2"/>
+        <path d="M300 470 q130 84 260 0 l-16 66 q-114 56 -228 0 z" fill="#e0559a"/>
+      </g>
+
+      <!-- capybara -->
+      <g id="capy">
+        <ellipse cx="430" cy="500" rx="146" ry="92" fill="#a9744a"/>
+        <!-- cape -->
+        <path d="M292 452 q138 -66 276 0 q18 88 -24 116 q-114 44 -228 0 q-42 -28 -24 -116z" fill="#fdc9e2"/>
+        <circle cx="360" cy="500" r="7" fill="#ffffffaa"/><circle cx="430" cy="522" r="7" fill="#ffffffaa"/><circle cx="500" cy="497" r="7" fill="#ffffffaa"/>
+        <!-- ears -->
+        <circle cx="336" cy="266" r="20" fill="#8a5a33"/><circle cx="524" cy="266" r="20" fill="#8a5a33"/>
+        <!-- head -->
+        <ellipse cx="430" cy="352" rx="120" ry="102" fill="#b5824f"/>
+        <ellipse cx="430" cy="408" rx="64" ry="43" fill="#cfa26c"/>
+        <ellipse cx="414" cy="399" rx="6" ry="8" fill="#5c3a1e"/><ellipse cx="446" cy="399" rx="6" ry="8" fill="#5c3a1e"/>
+        <path id="mouth" d="M414 428 q16 12 32 0" stroke="#5c3a1e" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <g id="eyesOpen">
+          <circle cx="374" cy="332" r="9" fill="#2e1a0c"/><circle cx="486" cy="332" r="9" fill="#2e1a0c"/>
+          <circle cx="377" cy="329" r="3" fill="#fff"/><circle cx="489" cy="329" r="3" fill="#fff"/>
+        </g>
+        <g id="eyesHappy" visibility="hidden">
+          <path d="M362 334 q12 -12 24 0" stroke="#2e1a0c" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <path d="M474 334 q12 -12 24 0" stroke="#2e1a0c" stroke-width="6" fill="none" stroke-linecap="round"/>
+        </g>
+        <ellipse cx="348" cy="372" rx="16" ry="10" fill="#e8909a" opacity=".55"/>
+        <ellipse cx="512" cy="372" rx="16" ry="10" fill="#e8909a" opacity=".55"/>
+      </g>
+
+      <!-- HAIR (added by script) -->
+      <g id="hairG"></g>
+      <g id="glossG" visibility="hidden">
+        <ellipse cx="380" cy="228" rx="52" ry="20" fill="#ffffff" opacity=".5" transform="rotate(-18 380 228)"/>
+        <ellipse cx="500" cy="222" rx="34" ry="13" fill="#ffffff" opacity=".45" transform="rotate(14 500 222)"/>
+      </g>
+      <g id="foamG"></g>
+      <g id="sparkG"></g>
+      <g id="dropsG"></g>
+
+      <!-- unicorn stylist -->
+      <g id="unicorn">
+        <ellipse cx="795" cy="520" rx="96" ry="68" fill="#fdfdff"/>
+        <rect x="742" y="546" width="26" height="62" rx="12" fill="#f4eefc"/>
+        <rect x="818" y="546" width="26" height="62" rx="12" fill="#f4eefc"/>
+        <path d="M742 500 q-40 -70 -32 -150 q4 -34 40 -32 q40 4 44 44 q6 70 34 120 z" fill="#fdfdff"/>
+        <!-- mane -->
+        <ellipse cx="770" cy="345" rx="22" ry="34" fill="#ff8fbe" transform="rotate(18 770 345)"/>
+        <ellipse cx="782" cy="392" rx="20" ry="32" fill="#8ef1ff" transform="rotate(14 782 392)"/>
+        <ellipse cx="792" cy="440" rx="20" ry="30" fill="#b58cff" transform="rotate(10 792 440)"/>
+        <!-- head -->
+        <ellipse cx="722" cy="322" rx="58" ry="46" fill="#fdfdff"/>
+        <ellipse cx="686" cy="338" rx="26" ry="20" fill="#fbe9f2"/>
+        <circle cx="676" cy="334" r="4" fill="#c98bb0"/>
+        <circle cx="724" cy="310" r="8" fill="#3a2150"/>
+        <circle cx="727" cy="307" r="2.6" fill="#fff"/>
+        <path d="M700 352 q10 8 20 2" stroke="#c98bb0" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="742" cy="336" rx="12" ry="8" fill="#ffb3cf" opacity=".6"/>
+        <path d="M756 292 l16 -34 q4 -8 8 0 l8 36 z" fill="#fdfdff"/>
+        <ellipse cx="768" cy="292" rx="10" ry="6" fill="#f2d6e6"/>
+        <!-- horn -->
+        <path id="hornP" d="M716 278 l12 -66 l16 62 z" fill="url(#horn)" stroke="#e2a51f" stroke-width="2"/>
+        <!-- foreleg + brush -->
+        <path d="M712 468 q-58 -6 -92 -50 l20 -22 q34 38 80 42 z" fill="#fdfdff"/>
+        <g id="brush" transform="rotate(-24 626 400)">
+          <rect x="612" y="392" width="52" height="16" rx="8" fill="#e0559a"/>
+          <rect x="586" y="386" width="30" height="28" rx="6" fill="#ffd560"/>
+          <line x1="592" y1="386" x2="592" y2="372" stroke="#a9744a" stroke-width="4" stroke-linecap="round"/>
+          <line x1="601" y1="386" x2="601" y2="368" stroke="#a9744a" stroke-width="4" stroke-linecap="round"/>
+          <line x1="610" y1="386" x2="610" y2="372" stroke="#a9744a" stroke-width="4" stroke-linecap="round"/>
+        </g>
+      </g>
+    </svg>
+
+    <div class="bubblewrap"><div class="speech" id="speech">Hi! I'm Sparkle the stylist! 🦄 Pick a tool and let's make GORGEOUS hair!</div></div>
+    <button class="rinse-btn" id="rinseBtn" hidden>🚿 Rinse!</button>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="toolbar">
+    <button class="tool" data-mode="wash" id="washTool"><span class="ico">🧼</span>Wash</button>
+    <button class="tool" data-mode="color" id="colorTool"><span class="ico">🎨</span>Color</button>
+    <button class="tool" data-mode="wave" id="waveTool"><span class="ico">🌊</span>Waves</button>
+    <button class="tool" data-mode="curl" id="curlTool"><span class="ico">🌀</span>Curls</button>
+    <button class="tool" data-mode="spark" id="sparkTool"><span class="ico">✨</span>Sparkles</button>
+    <button class="tool" id="tadaBtn"><span class="ico">📸</span>Ta-da!</button>
+    <button class="tool" id="resetBtn"><span class="ico">🔄</span>Start over</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const SVGNS = 'http://www.w3.org/2000/svg';
+const stage = document.getElementById('stage');
+const hairG = document.getElementById('hairG');
+const foamG = document.getElementById('foamG');
+const sparkG = document.getElementById('sparkG');
+const dropsG = document.getElementById('dropsG');
+const glossG = document.getElementById('glossG');
+const speech = document.getElementById('speech');
+const rinseBtn = document.getElementById('rinseBtn');
+const paletteEl = document.getElementById('palette');
+const holder = document.getElementById('holder');
+const NATURAL = '#8a5a33';
+
+const TUFTS = [
+  { cx: 316, cy: 296, rx: 46, ry: 50 },
+  { cx: 546, cy: 292, rx: 45, ry: 48 },
+  { cx: 330, cy: 252, rx: 62, ry: 56 },
+  { cx: 532, cy: 246, rx: 60, ry: 54 },
+  { cx: 396, cy: 212, rx: 64, ry: 58 },
+  { cx: 470, cy: 206, rx: 62, ry: 56 },
+  { cx: 434, cy: 258, rx: 76, ry: 62 },
+];
+const COLORS = ['#ff6fa5', '#ff9d5c', '#ffd94a', '#7ed67e', '#5ec8f5', '#8f7bff', '#c470e8', NATURAL];
+
+let mode = null;
+let selColor = '#ff6fa5';
+let foamCount = 0;
+let washed = false;
+let sparkles = [];
+let muted = false;
+let painting = false;
+let lastBubbleSfx = 0;
+
+/* ---------- hair ---------- */
+const tuftStyles = TUFTS.map(() => 'fluffy');
+const tuftGroups = [];
+const tuftEls = TUFTS.map((t, i) => {
+  const g = document.createElementNS(SVGNS, 'g');
+  g.style.transformOrigin = `${t.cx}px ${t.cy}px`;
+  const el = document.createElementNS(SVGNS, 'ellipse');
+  el.setAttribute('cx', t.cx); el.setAttribute('cy', t.cy);
+  el.setAttribute('rx', t.rx); el.setAttribute('ry', t.ry);
+  el.setAttribute('fill', NATURAL);
+  el.setAttribute('class', 'tuft');
+  const deco = document.createElementNS(SVGNS, 'g');
+  deco.setAttribute('pointer-events', 'none');
+  g.appendChild(el); g.appendChild(deco);
+  hairG.appendChild(g);
+  tuftGroups.push({ g, deco });
+  return el;
+});
+
+function decoratTuft(i, style) {
+  const t = TUFTS[i];
+  const { deco } = tuftGroups[i];
+  deco.innerHTML = '';
+  const stroke = 'rgba(60, 25, 70, .38)';
+  const hi = 'rgba(255, 255, 255, .5)';
+  if (style === 'wavy') {
+    for (let row = -1; row <= 1; row++) {
+      const y = t.cy + row * t.ry * 0.42;
+      const w = t.rx * (row === 0 ? 0.78 : 0.55);
+      const p = document.createElementNS(SVGNS, 'path');
+      const seg = w / 2;
+      p.setAttribute('d',
+        `M ${t.cx - w} ${y} q ${seg / 2} ${-11} ${seg} 0 t ${seg} 0 t ${seg} 0 t ${seg} 0`);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', row === -1 ? hi : stroke);
+      p.setAttribute('stroke-width', '5');
+      p.setAttribute('stroke-linecap', 'round');
+      deco.appendChild(p);
+    }
+  } else if (style === 'curly') {
+    const spots = [
+      [t.cx - t.rx * 0.42, t.cy - t.ry * 0.1, t.rx * 0.26],
+      [t.cx + t.rx * 0.36, t.cy - t.ry * 0.32, t.rx * 0.22],
+      [t.cx + t.rx * 0.1, t.cy + t.ry * 0.34, t.rx * 0.24],
+    ];
+    spots.forEach(([x, y, r], k) => {
+      const c = document.createElementNS(SVGNS, 'circle');
+      c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', r);
+      c.setAttribute('fill', 'none');
+      c.setAttribute('stroke', k === 1 ? hi : stroke);
+      c.setAttribute('stroke-width', '5');
+      deco.appendChild(c);
+      const dot = document.createElementNS(SVGNS, 'circle');
+      dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('r', Math.max(2.5, r * 0.3));
+      dot.setAttribute('fill', k === 1 ? hi : stroke);
+      deco.appendChild(dot);
+    });
+  }
+}
+
+function boing(i) {
+  const { g } = tuftGroups[i];
+  g.style.animation = 'none'; void g.getBBox; g.getBoundingClientRect();
+  g.style.animation = 'boing .45s ease';
+  setTimeout(() => { g.style.animation = ''; }, 500);
+}
+
+function inHair(x, y, slack = 1.25) {
+  return TUFTS.some((t) => {
+    const dx = (x - t.cx) / (t.rx * slack), dy = (y - t.cy) / (t.ry * slack);
+    return dx * dx + dy * dy <= 1;
+  });
+}
+
+function svgPoint(ev) {
+  const pt = stage.createSVGPoint();
+  pt.x = ev.clientX; pt.y = ev.clientY;
+  return pt.matrixTransform(stage.getScreenCTM().inverse());
+}
+
+/* ---------- audio ---------- */
+let ctx = null;
+function audio() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+function tone(freq, dur, type = 'sine', vol = 0.18, when = 0) {
+  if (muted) return;
+  try {
+    const a = audio();
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, a.currentTime + when);
+    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + when + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(a.currentTime + when); o.stop(a.currentTime + when + dur + 0.05);
+  } catch (e) {}
+}
+const sfx = {
+  pop() { tone(520, 0.09, 'triangle', 0.2); },
+  bubble() { tone(300 + Math.random() * 400, 0.12, 'sine', 0.1); },
+  paint() { tone(392, 0.1, 'triangle', 0.15); tone(523, 0.12, 'triangle', 0.13, 0.06); },
+  spark() { tone(1200, 0.1, 'sine', 0.12); tone(1800, 0.16, 'sine', 0.1, 0.05); },
+  rinse() { for (let i = 0; i < 6; i++) tone(600 - i * 60, 0.12, 'sine', 0.08, i * 0.07); },
+  boing() { tone(220, 0.1, 'triangle', 0.18); tone(440, 0.14, 'triangle', 0.14, 0.08); },
+  fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.28, 'triangle', 0.16, i * 0.13)); },
+};
+
+/* ---------- speech ---------- */
+let speechTimer = null;
+function say(text, ms = 0) {
+  speech.style.animation = 'none'; void speech.offsetWidth; speech.style.animation = '';
+  speech.textContent = text;
+  clearTimeout(speechTimer);
+  if (ms) speechTimer = setTimeout(() => say(modeLine()), ms);
+}
+function modeLine() {
+  if (mode === 'wash') return washed ? 'So clean and shiny! Wash again any time! 🫧' : 'Rub-a-dub! Scrub the hair to make bubbles! 🫧';
+  if (mode === 'color') return 'Ooh! Pick a color, then tap the hair to paint it! 🎨';
+  if (mode === 'wave') return 'Tap the hair to make beautiful wavy waves! 🌊';
+  if (mode === 'curl') return 'Tap the hair for bouncy boingy curls! 🌀';
+  if (mode === 'spark') return 'Tap the hair and my horn will zap sparkles onto it! ✨';
+  return "Pick a tool and let's style! 💖";
+}
+
+/* ---------- palette ---------- */
+COLORS.forEach((c) => {
+  const b = document.createElement('button');
+  b.className = 'swatch'; b.style.background = c;
+  if (c === NATURAL) b.title = 'Natural brown';
+  b.addEventListener('click', () => selectColor(c, b));
+  paletteEl.appendChild(b);
+});
+const rb = document.createElement('button');
+rb.className = 'swatch rainbow'; rb.title = 'Rainbow!';
+rb.addEventListener('click', () => selectColor('rainbow', rb));
+paletteEl.appendChild(rb);
+
+function selectColor(c, btn) {
+  selColor = c;
+  [...paletteEl.children].forEach((el) => el.classList.remove('sel'));
+  btn.classList.add('sel');
+  sfx.pop();
+  say(c === 'rainbow' ? 'RAINBOW! My favorite!! 🌈' : 'Great choice! Now tap the hair!', 2600);
+}
+paletteEl.children[0].classList.add('sel');
+
+/* ---------- modes ---------- */
+const toolBtns = [...document.querySelectorAll('.tool[data-mode]')];
+toolBtns.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+function setMode(m) {
+  mode = m;
+  toolBtns.forEach((b) => b.classList.toggle('active', b.dataset.mode === m));
+  paletteEl.classList.toggle('show', m === 'color');
+  holder.classList.toggle('paint-cursor', m === 'color');
+  sfx.pop();
+  say(modeLine());
+}
+
+/* ---------- painting ---------- */
+function paintAt(x, y) {
+  let hit = false;
+  TUFTS.forEach((t, i) => {
+    const dx = (x - t.cx) / t.rx, dy = (y - t.cy) / t.ry;
+    if (dx * dx + dy * dy <= 1.15) {
+      const fill = selColor === 'rainbow' ? 'url(#rainbow)' : selColor;
+      if (tuftEls[i].getAttribute('fill') !== fill) {
+        tuftEls[i].setAttribute('fill', fill);
+        hit = true;
+      }
+    }
+  });
+  if (hit) sfx.paint();
+}
+
+/* ---------- waves & curls ---------- */
+function styleAt(x, y, style) {
+  let hit = false;
+  TUFTS.forEach((t, i) => {
+    const dx = (x - t.cx) / t.rx, dy = (y - t.cy) / t.ry;
+    if (dx * dx + dy * dy <= 1.15 && tuftStyles[i] !== style) {
+      tuftStyles[i] = style;
+      decoratTuft(i, style);
+      boing(i);
+      hit = true;
+    }
+  });
+  if (hit) sfx.boing();
+}
+
+/* ---------- washing ---------- */
+function foamAt(x, y) {
+  if (!inHair(x, y)) return;
+  const c = document.createElementNS(SVGNS, 'circle');
+  const r = 10 + Math.random() * 16;
+  c.setAttribute('cx', x + (Math.random() * 24 - 12));
+  c.setAttribute('cy', y + (Math.random() * 24 - 12));
+  c.setAttribute('r', r);
+  c.setAttribute('fill', '#ffffff');
+  c.setAttribute('opacity', '.9');
+  c.style.animation = 'foamy .3s ease';
+  foamG.appendChild(c);
+  if (foamG.childNodes.length > 90) foamG.firstChild.remove();
+  foamCount++;
+  const now = performance.now();
+  if (now - lastBubbleSfx > 120) { sfx.bubble(); lastBubbleSfx = now; }
+  if (foamCount === 14) say('So foamy!! Press the Rinse button! 🚿');
+  if (foamCount >= 14) rinseBtn.hidden = false;
+}
+
+rinseBtn.addEventListener('click', () => {
+  rinseBtn.hidden = true;
+  sfx.rinse();
+  for (let i = 0; i < 34; i++) {
+    const d = document.createElementNS(SVGNS, 'ellipse');
+    d.setAttribute('cx', 280 + Math.random() * 320);
+    d.setAttribute('cy', 120 + Math.random() * 80);
+    d.setAttribute('rx', 5); d.setAttribute('ry', 9);
+    d.setAttribute('fill', '#7fd4ff'); d.setAttribute('opacity', '.85');
+    d.style.animation = `droplet ${0.7 + Math.random() * 0.5}s ease-in ${Math.random() * 0.4}s forwards`;
+    dropsG.appendChild(d);
+  }
+  setTimeout(() => {
+    foamG.innerHTML = ''; dropsG.innerHTML = '';
+    foamCount = 0; washed = true;
+    glossG.setAttribute('visibility', 'visible');
+    document.getElementById('eyesOpen').setAttribute('visibility', 'hidden');
+    document.getElementById('eyesHappy').setAttribute('visibility', 'visible');
+    hairG.style.transition = 'transform .5s ease';
+    hairG.style.transformOrigin = '430px 280px';
+    hairG.style.transform = 'scale(1.06)';
+    setTimeout(() => { hairG.style.transform = 'scale(1)'; }, 550);
+    sfx.fanfare();
+    say('Sooo shiny! What a happy capybara! 💖', 3200);
+  }, 1100);
+});
+
+/* ---------- sparkles ---------- */
+function sparkleAt(x, y) {
+  if (!inHair(x, y)) return;
+  const s = document.createElementNS(SVGNS, 'path');
+  const size = 9 + Math.random() * 12;
+  s.setAttribute('d', `M0 ${-size} L${size * 0.28} ${-size * 0.28} L${size} 0 L${size * 0.28} ${size * 0.28} L0 ${size} L${-size * 0.28} ${size * 0.28} L${-size} 0 L${-size * 0.28} ${-size * 0.28} Z`);
+  s.setAttribute('fill', Math.random() < 0.5 ? '#fff6c9' : '#ffe15c');
+  s.setAttribute('stroke', '#ffbe2e'); s.setAttribute('stroke-width', '1');
+  s.setAttribute('transform', `translate(${x} ${y})`);
+  s.style.transformOrigin = `${x}px ${y}px`;
+  s.style.animation = `twinkle ${1.2 + Math.random()}s ease-in-out ${Math.random()}s infinite`;
+  sparkG.appendChild(s);
+  sparkles.push(s);
+  if (sparkles.length > 40) sparkles.shift().remove();
+  // horn glow
+  const horn = document.getElementById('hornP');
+  horn.setAttribute('fill', '#fff2ae');
+  setTimeout(() => horn.setAttribute('fill', 'url(#horn)'), 180);
+  sfx.spark();
+  if (sparkles.length === 10) say('Ooh la la, so sparkly!! ✨', 2600);
+}
+
+/* ---------- pointer handling ---------- */
+stage.addEventListener('pointerdown', (ev) => {
+  ev.preventDefault();
+  audio();
+  const p = svgPoint(ev);
+  painting = true;
+  if (mode === 'color') paintAt(p.x, p.y);
+  else if (mode === 'wash') foamAt(p.x, p.y);
+  else if (mode === 'spark') sparkleAt(p.x, p.y);
+  else if (mode === 'wave') styleAt(p.x, p.y, 'wavy');
+  else if (mode === 'curl') styleAt(p.x, p.y, 'curly');
+  else if (inHair(p.x, p.y)) say("Pick a tool below, then touch the hair! 💇", 2600);
+});
+stage.addEventListener('pointermove', (ev) => {
+  if (!painting) return;
+  const p = svgPoint(ev);
+  if (mode === 'color') paintAt(p.x, p.y);
+  else if (mode === 'wash') foamAt(p.x, p.y);
+  else if (mode === 'wave') styleAt(p.x, p.y, 'wavy');
+  else if (mode === 'curl') styleAt(p.x, p.y, 'curly');
+});
+addEventListener('pointerup', () => { painting = false; });
+addEventListener('pointercancel', () => { painting = false; });
+
+/* ---------- ta-da ---------- */
+document.getElementById('tadaBtn').addEventListener('click', () => {
+  audio();
+  sfx.fanfare();
+  document.getElementById('flash').classList.remove('go');
+  void document.getElementById('flash').offsetWidth;
+  document.getElementById('flash').classList.add('go');
+  const bits = ['🎉', '💖', '⭐', '🌈', '🧡', '✨', '🦄', '🍊'];
+  for (let i = 0; i < 44; i++) {
+    const s = document.createElement('span');
+    s.className = 'confetti';
+    s.textContent = bits[Math.floor(Math.random() * bits.length)];
+    s.style.left = Math.random() * 100 + '%';
+    s.style.animationDuration = 1.6 + Math.random() * 1.8 + 's';
+    s.style.animationDelay = Math.random() * 0.5 + 's';
+    holder.appendChild(s);
+    setTimeout(() => s.remove(), 4200);
+  }
+  say('TA-DAAA!! The most beautiful capybara EVER! 📸💖', 3600);
+});
+
+/* ---------- reset ---------- */
+document.getElementById('resetBtn').addEventListener('click', () => {
+  tuftEls.forEach((el) => el.setAttribute('fill', NATURAL));
+  tuftGroups.forEach((tg, i) => { tg.deco.innerHTML = ''; tuftStyles[i] = 'fluffy'; });
+  foamG.innerHTML = ''; dropsG.innerHTML = ''; sparkG.innerHTML = '';
+  sparkles = []; foamCount = 0; washed = false;
+  rinseBtn.hidden = true;
+  glossG.setAttribute('visibility', 'hidden');
+  document.getElementById('eyesOpen').setAttribute('visibility', 'visible');
+  document.getElementById('eyesHappy').setAttribute('visibility', 'hidden');
+  sfx.pop();
+  say('A fresh start! What style shall we make today? 💇', 3000);
+});
+
+/* ---------- mute ---------- */
+document.getElementById('muteBtn').addEventListener('click', (e) => {
+  muted = !muted;
+  e.currentTarget.textContent = muted ? '🔇' : '🔊';
+});
+</script>
+</body>
+</html>

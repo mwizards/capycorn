@@ -1,4 +1,4 @@
-const CACHE = 'capycorn-v1';
+const CACHE = 'capycorn-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './coin-cat-arena.html',
   './capybara-jump.html',
   './capy-vs-unicorn.html',
+  './capy-salon.html',
   './assets/branding/capybara-snackdown-logo.png',
   './assets/branding/icon-180.png',
   './assets/branding/icon-192.png',

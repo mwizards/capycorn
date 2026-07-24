@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <meta name="description" content="Choose from six colorful, touch-friendly games in the Capycorn Arcade.">
+    <meta name="description" content="Choose from seven colorful, touch-friendly games in the Capycorn Arcade.">
   <meta name="theme-color" content="#20133f">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
@@ -201,6 +201,11 @@
     .coin-trail i:nth-child(3) { right: 20px; bottom: 14px; transform: scale(.65); }
 
     .race { --accent: #8ef1ff; --accent2: #ff8ad8; }
+    .salon { --accent: #ff9dc6; --accent2: #b58cff; }
+    .salon-art { display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .salon-capy { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 8px 6px #08031377); }
+    .salon-tools { display: flex; flex-direction: column; gap: 2px; font-size: 30px; line-height: 1.1; filter: drop-shadow(0 6px 5px #08031377); }
+    .salon-unicorn { font-size: 64px; line-height: 1; transform: scaleX(-1) rotate(-6deg); filter: drop-shadow(0 8px 6px #08031377); }
     .race-art { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .race-capy { width: 92px; height: 92px; object-fit: contain; transform: rotate(-5deg); filter: drop-shadow(0 8px 6px #08031377); }
     .race-vs { padding: 5px 8px; border-radius: 10px; color: #2d193f; background: var(--accent); font-size: 14px; font-weight: 1000; transform: rotate(-7deg); box-shadow: inset 0 -2px 0 #0002; }
@@ -239,7 +244,7 @@
   <main class="shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">Six worlds · one happy place</p>
+        <p class="eyebrow">Seven worlds · one happy place</p>
         <h1>Capycorn Arcade</h1>
         <p>Pick an adventure and jump straight in. Every game works with touch, and most have keyboard controls too.</p>
       </div>
@@ -318,11 +323,24 @@
           <span class="race-unicorn">🦄</span>
         </div>
       </a>
+      <a class="game-card salon wide" href="capy-salon.html" data-key="7">
+        <div class="card-copy">
+          <div class="card-top"><span class="number">7</span><span class="genre">Salon &amp; styling</span></div>
+          <h2>Capy Salon</h2>
+          <p>Sparkle the unicorn is doing capybara hair! Wash, color, add waves, curls, and sparkles.</p>
+          <span class="play">Play game <span>▶</span></span>
+        </div>
+        <div class="card-art salon-art" aria-hidden="true">
+          <img class="salon-capy" src="assets/capy-reference/chill-capy.png" alt="">
+          <span class="salon-tools"><span>💇</span><span>✨</span></span>
+          <span class="salon-unicorn">🦄</span>
+        </div>
+      </a>
     </section>
 
     <footer class="footer">
       <span>Tap a card to start · Use your browser’s Back button to return</span>
-      <span>Keyboard: <kbd>1</kbd>–<kbd>6</kbd> picks a game</span>
+      <span>Keyboard: <kbd>1</kbd>–<kbd>7</kbd> picks a game</span>
     </footer>
   </main>
 

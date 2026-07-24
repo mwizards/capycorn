@@ -1,7 +1,7 @@
 {
   "name": "Capycorn Arcade",
   "short_name": "Capycorn",
-  "description": "Six colorful, touch-friendly games in one happy place.",
+  "description": "Seven colorful, touch-friendly games in one happy place.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
